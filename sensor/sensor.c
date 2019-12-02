@@ -1,23 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
+#include "../system_def.h"
 
 #define SENSOR_SETTINGS "sensor.yaml"
-#define MESSAGE_SIZE 64
 
 //TODO Delete this ones.
 #define HOSTNAME "127.0.0.1"
-#define PORT 240231
-
-typedef struct message {
-
-    int client_type;
-    char message_type;
-    char message_content[MESSAGE_SIZE];
-
-} message;
+#define PORT 79790
 
 /*
     new_message:
@@ -31,22 +18,34 @@ typedef struct message {
         return:
             Returns the address address of the new message.
 */
-message *new_message(char message_type, char message_content[MESSAGE_SIZE]) {
+sensor_message *new_sensor_message(char message_type, sensor *sensor) {
 
-    message *new_message = malloc(sizeof(struct message));
+    sensor_message *new_message = malloc(sizeof(struct sensor_message));
 
-    new_message->client_type = 2;
     new_message->message_type = message_type;
-    strcpy(new_message->message_content, message_content);
+    new_message->message_content = -1;
+    new_message->sensor = sensor;
 
     return new_message;
+}
+
+sensor *new_sensor(short id, char type[], char local[], float firmware_version) {
+
+    sensor *new_sensor = malloc(sizeof(struct sensor));
+
+    new_sensor->id = id;
+    strcpy(new_sensor->type, type);
+    strcpy(new_sensor->local, local);
+    new_sensor->firmware_version = firmware_version;
+
+    return new_sensor;
 }
 
 int new_socket() {
 
     int new_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-    if(new_message < 0) {
+    if(new_socket < 0) {
 
         perror(">Socket creation failed.\nAborted.\n");
         exit(1);
@@ -86,7 +85,7 @@ struct sockaddr_in set_connection_info(char *hostname, int port) {
 void create_connection(int sockfd, struct sockaddr_in servaddr) {
 
     //if the connection to the server doesn't succeed.
-    if(connect(sockfd, (struct sockaddr) &servaddr, sizeof(servaddr)) < 0) {
+    if(connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
 
         perror(">Connection to the server failed.\nAborted.\n");
         exit(2);
@@ -94,7 +93,7 @@ void create_connection(int sockfd, struct sockaddr_in servaddr) {
     //if the connection to the server succeeds.
     } else {
 
-        char addr[INET_AADRSTRLEN];
+        char addr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(servaddr.sin_addr), addr, INET_ADDRSTRLEN);
         printf(">Connection established with: %s.\n", addr);
     }
@@ -106,10 +105,22 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in servaddr;
 
     sockfd = new_socket();
+    //HOSTNAME and PORT must come from yaml file.
     servaddr = set_connection_info(HOSTNAME, PORT);
 
     create_connection(sockfd, servaddr);
 
+    //Send regestry message with (ID, TYPE, LOCAL, FIRMWARE_V)
+    //(ID, TYPE, LOCAL, FIRMWARE_V) must come from YAML file.
+    sensor *sensor1 = new_sensor(1, "CO2", "Evora", 1.0);
+    sensor_message *new_message= new_sensor_message('r', sensor1);
+
+    send(sockfd, new_message, sizeof(new_message), 0);
+
+    /*
+    Every X seconds, that comes from YAML file (read_interval), sends a sensor read.
+    For now, every read is a radom value.
+    */
 
     return 0;
 }
