@@ -5,6 +5,7 @@
 //TODO Delete this ones.
 #define HOSTNAME "127.0.0.1"
 #define PORT 79790
+#define READ_INTERVAL 10
 
 /*
     new_message:
@@ -103,6 +104,7 @@ int main(int argc, char const *argv[]) {
 
     int sockfd;
     struct sockaddr_in servaddr;
+    struct timeval time;
 
     sockfd = new_socket();
     //HOSTNAME and PORT must come from yaml file.
@@ -115,12 +117,29 @@ int main(int argc, char const *argv[]) {
     sensor *sensor1 = new_sensor(1, "CO2", "Evora", 1.0);
     sensor_message *new_message= new_sensor_message('r', sensor1);
 
-    send(sockfd, new_message, sizeof(new_message), 0);
+    send(sockfd, new_message, sizeof(struct sensor_message), 0);
+    printf("REGISTER MSG SENT.\n");
 
     /*
     Every X seconds, that comes from YAML file (read_interval), sends a sensor read.
     For now, every read is a radom value.
     */
 
+    new_message->message_type = 'v';
+
+    time.tv_sec = READ_INTERVAL;
+    time.tv_usec = 0;
+
+    for(;;) {
+
+        if(time.tv_sec == 0 && time.tv_usec == 0) {
+
+            new_message->message_content = rand() % 100;
+            send(sockfd, new_message, sizeof(struct sensor_message), 0);
+            time.tv_sec = READ_INTERVAL;
+
+            printf("READ SENT.\n");
+        }
+    }
     return 0;
 }
