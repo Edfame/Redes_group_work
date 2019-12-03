@@ -1,4 +1,14 @@
-#include "../system_def.h"
+#include "sensor.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #define SENSOR_SETTINGS "sensor.yaml"
 
@@ -104,7 +114,6 @@ int main(int argc, char const *argv[]) {
 
     int sockfd;
     struct sockaddr_in servaddr;
-    struct timeval time;
 
     sockfd = new_socket();
     //HOSTNAME and PORT must come from yaml file.
@@ -127,19 +136,14 @@ int main(int argc, char const *argv[]) {
 
     new_message->message_type = 'v';
 
-    time.tv_sec = READ_INTERVAL;
-    time.tv_usec = 0;
-
     for(;;) {
 
-        if(time.tv_sec == 0 && time.tv_usec == 0) {
+        sleep(READ_INTERVAL);
+        new_message->message_content = rand() % 100;
+        send(sockfd, new_message, sizeof(struct sensor_message), 0);
 
-            new_message->message_content = rand() % 100;
-            send(sockfd, new_message, sizeof(struct sensor_message), 0);
-            time.tv_sec = READ_INTERVAL;
+        printf("READ SENT.\n");
 
-            printf("READ SENT.\n");
-        }
     }
     return 0;
 }
