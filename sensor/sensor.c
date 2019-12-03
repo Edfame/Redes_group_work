@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include "../yaml/cyaml.h"
 
 #define SENSOR_SETTINGS "sensor.yaml"
 
