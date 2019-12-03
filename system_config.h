@@ -1,1 +1,1 @@
-
+int new_socket();

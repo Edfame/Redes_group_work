@@ -53,24 +53,6 @@ sensor *new_sensor(short id, char type[], char local[], float firmware_version) 
     return new_sensor;
 }
 
-int new_socket() {
-
-    int new_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(new_socket < 0) {
-
-        perror(">Socket creation failed.\nAborted.\n");
-        exit(1);
-
-    } else {
-
-        printf(">Socket creation succeeded.\n");
-
-    }
-
-    return new_socket;
-}
-
 struct sockaddr_in set_connection_info(char *hostname, int port) {
 
     struct sockaddr_in servaddr;
