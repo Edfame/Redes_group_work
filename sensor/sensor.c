@@ -1,3 +1,4 @@
+#include "../system_config.h"
 #include "sensor.h"
 
 #include <stdio.h>
@@ -16,7 +17,7 @@
 //TODO Delete this ones.
 #define HOSTNAME "127.0.0.1"
 #define PORT 79790
-#define READ_INTERVAL 10
+#define READ_INTERVAL 1
 
 /*
     new_message:
@@ -122,10 +123,10 @@ int main(int argc, char const *argv[]) {
     for(;;) {
 
         sleep(READ_INTERVAL);
-        new_message->message_content = rand() % 100;
+        new_message->message_content = rand() % 500;
         send(sockfd, new_message, sizeof(struct sensor_message), 0);
 
-        printf("READ SENT.\n");
+        printf("READ SENT: %d\n", new_message->message_content);
 
     }
     return 0;

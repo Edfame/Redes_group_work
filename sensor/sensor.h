@@ -1,8 +1,6 @@
 #ifndef SENSOR_H_
 #define SENSOR_H_
 
-#include "../system_config.h"
-
 #define LOCAL_SIZE 32
 #define TYPE_SIZE 3
 

@@ -1,4 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "system_config.h"
+
+#include <sys/socket.h>
 
 int new_socket() {
 
