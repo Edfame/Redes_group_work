@@ -1,6 +1,4 @@
 #include "../system_config.h"
-#include "sensor.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,41 +16,6 @@
 #define HOSTNAME "127.0.0.1"
 #define PORT 79790
 #define READ_INTERVAL 1
-
-/*
-    new_message:
-        Allocates space in memory for a new message.
-        Copies the inrfomation passed through the args to that space.
-
-        args:
-            - message_type: represents the type of message that will be sent.
-            - message_content: is the message that is going to be sent.
-
-        return:
-            Returns the address address of the new message.
-*/
-sensor_message *new_sensor_message(char message_type, sensor *sensor) {
-
-    sensor_message *new_message = malloc(sizeof(struct sensor_message));
-
-    new_message->message_type = message_type;
-    new_message->message_content = -1;
-    new_message->sensor = sensor;
-
-    return new_message;
-}
-
-sensor *new_sensor(short id, char type[], char local[], float firmware_version) {
-
-    sensor *new_sensor = malloc(sizeof(struct sensor));
-
-    new_sensor->id = id;
-    strcpy(new_sensor->type, type);
-    strcpy(new_sensor->local, local);
-    new_sensor->firmware_version = firmware_version;
-
-    return new_sensor;
-}
 
 struct sockaddr_in set_connection_info(char *hostname, int port) {
 
@@ -108,9 +71,8 @@ int main(int argc, char const *argv[]) {
     //Send regestry message with (ID, TYPE, LOCAL, FIRMWARE_V)
     //(ID, TYPE, LOCAL, FIRMWARE_V) must come from YAML file.
     sensor *sensor1 = new_sensor(1, "CO2", "Evora", 1.0);
-    sensor_message *new_message= new_sensor_message('r', sensor1);
 
-    send(sockfd, new_message, sizeof(struct sensor_message), 0);
+    send(sockfd, sensor1, sizeof(struct sensor), 0);
     printf("REGISTER MSG SENT.\n");
 
     /*
@@ -118,16 +80,18 @@ int main(int argc, char const *argv[]) {
     For now, every read is a radom value.
     */
 
-    new_message->message_type = 'v';
-
     for(;;) {
 
         sleep(READ_INTERVAL);
-        new_message->message_content = rand() % 500;
-        send(sockfd, new_message, sizeof(struct sensor_message), 0);
+        sensor1->read_value = rand() % 500;
+        send(sockfd, sensor1, sizeof(struct sensor), 0);
 
-        printf("READ SENT: %d\n", new_message->message_content);
+        printf("READ SENT: %d\n", sensor1->read_value);
 
     }
+
+    close(sockfd);
+    free(sensor1);
+
     return 0;
 }

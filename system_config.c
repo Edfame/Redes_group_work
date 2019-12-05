@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "system_config.h"
 
 #include <sys/socket.h>
@@ -20,4 +21,16 @@ int new_socket() {
     }
 
     return new_socket;
+}
+
+sensor *new_sensor(short id, char type[], char local[], float firmware_version) {
+
+    sensor *new_sensor = malloc(sizeof(struct sensor));
+
+    new_sensor->id = id;
+    strcpy(new_sensor->type, type);
+    strcpy(new_sensor->local, local);
+    new_sensor->firmware_version = firmware_version;
+
+    return new_sensor;
 }
