@@ -70,7 +70,7 @@ int main(int argc, char const *argv[]) {
 
     //Send regestry message with (ID, TYPE, LOCAL, FIRMWARE_V)
     //(ID, TYPE, LOCAL, FIRMWARE_V) must come from YAML file.
-    sensor *sensor1 = new_sensor(1, "CO2", "Evora", 1.0);
+    sensor *sensor1 = new_sensor(4, "NO2", "Setubal", 2.0);
 
     send(sockfd, sensor1, sizeof(struct sensor), 0);
     printf("REGISTER MSG SENT.\n");
