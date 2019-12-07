@@ -1,9 +1,18 @@
+#include "system_config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "system_config.h"
-
 #include <sys/socket.h>
+
+identifier *new_identifier(fd_type fd_type) {
+
+    identifier *new_identifier = malloc(sizeof(struct identifier));
+
+    new_identifier->type = fd_type;
+
+    return new_identifier;
+}
 
 int new_socket() {
 

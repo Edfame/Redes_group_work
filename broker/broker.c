@@ -13,10 +13,49 @@ DELETE comes from a file
 #define SENSOR_PORT 79790
 #define CLIENT_PORT 13375
 #define ADMIN_PORT 42069
+#define MAX_CLIENTS 200
+
+void read_sensor(int sockfd, fd_set *master, identifier **fds) {
+
+    sensor *temp_sensor = new_sensor(-1, "", "", -1.0);
+
+    //Checks if the the socket was closed by the client.
+    if(recv(sockfd, temp_sensor, sizeof(struct sensor), 0) <= 0) {
+
+        printf("Socket %d disconected.\n", sockfd);
+        close(sockfd);
+        FD_CLR(sockfd, master);
+
+
+    //In case it was not closed, there is info to work with.
+    } else if(temp_sensor->id != -1) {
+
+        printf("I received: %d, %s, %s, %f, %d\n",
+                            temp_sensor->id,
+                            temp_sensor->type,
+                            temp_sensor->local,
+                            temp_sensor->firmware_version,
+                            temp_sensor->read_value);
+    }
+
+    free(temp_sensor);
+}
 
 int max(int first_number, int second_number) {
 
     return (first_number > second_number ? first_number : second_number);
+}
+
+int max3(int first_number, int second_number, int third_number) {
+
+    return max(first_number, max(second_number, third_number));
+}
+
+void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type) {
+
+    *fds_max = max(*fds_max, socket_client);
+    //fds = realloc(fds, (int)(*fds_max) + 1);
+    fds[socket_client] = new_identifier(type);
 }
 
 struct sockaddr_in set_connection_info(int port) {
@@ -87,6 +126,7 @@ int accept_connection(int sockfd, struct sockaddr_in adress) {
 
     return socket_return;
 }
+
 int main(int argc, char const *argv[]) {
 
     struct sockaddr_in sensors,
@@ -112,10 +152,9 @@ int main(int argc, char const *argv[]) {
     fds_max = 0;
 
     fd_set master,
-            sensors_fds,
-            clients_fds,
-            admins_fds,
             read_fds;
+
+    identifier **fds;
 
     //Creating a new socket for incoming connections.
     socket_sensors_server = new_socket();
@@ -150,7 +189,12 @@ int main(int argc, char const *argv[]) {
     FD_SET(socket_admins_server, &master);
 
     //Setting the highest fd number to fds_max.
-    fds_max = max(socket_sensors_server, max(socket_clients_server, socket_admins_server));
+    fds_max = max3(socket_sensors_server, socket_clients_server, socket_admins_server);
+    fds = malloc(MAX_CLIENTS);
+
+    fds[socket_sensors_server] = new_identifier(FD_S);
+    fds[socket_clients_server] = new_identifier(FD_C);
+    fds[socket_admins_server] = new_identifier(FD_A);
 
     //Woopa loop!
     for(;;) {
@@ -159,7 +203,7 @@ int main(int argc, char const *argv[]) {
 
         if(select(fds_max + 1, &read_fds, NULL, NULL, NULL) == -1) {
 
-            perror("Select failed.");
+            perror("Select failed.\n");
             exit(EXIT_FAILURE);
         }
 
@@ -175,11 +219,9 @@ int main(int argc, char const *argv[]) {
                     socket_sensors_client = accept_connection(socket_sensors_server, sensors);
 
                     FD_SET(socket_sensors_client, &master);
-                    FD_SET(socket_sensors_client, &sensors_fds);
                     printf("New sensor registred.\n");
 
-                    fds_max = (fds_max < socket_sensors_client ? socket_sensors_client : fds_max);
-
+                    fds_realloc(&fds_max, socket_sensors_client, fds, FD_S);
                 /*
                     Handeling new clients connecting
                 */
@@ -190,10 +232,9 @@ int main(int argc, char const *argv[]) {
                     //socket_clients_client = accept_connection(socket_clients_server, clients);
 
                     FD_SET(socket_clients_client, &master);
-                    FD_SET(socket_clients_client, &clients_fds);
                     printf("New client registred.\n");
 
-                    fds_max = (fds_max < socket_clients_client ? socket_clients_client : fds_max);
+                    fds_realloc(&fds_max, socket_clients_client, fds, FD_C);
 
                 /*
                     Handeling new admins connecting
@@ -203,62 +244,35 @@ int main(int argc, char const *argv[]) {
                     socket_admins_client = accept_connection(socket_admins_server, admins);
 
                     FD_SET(socket_admins_client, &master);
-                    FD_SET(socket_admins_client, &admins_fds);
                     printf("New admin registred.\n");
 
-                    fds_max = (fds_max < socket_admins_client ? socket_admins_client : fds_max);
+                    fds_realloc(&fds_max, socket_admins_client, fds, FD_A);
 
                 /*
                     Handeling data from any type of clients.
                 */
-                } else if(i == socket_sensors_client) {//Trying to receive data from the sensor.
+                } else {
 
-                    printf("socket_sensors_client\n");
+                    switch(fds[i]->type) {
 
-                    for (int d = 0; d <= fds_max; d++) {
+                        case FD_S:
 
-                        read_fds = sensors_fds;
+                            read_sensor(i, &master, fds);
+                            break;
 
-                        if(select(fds_max + 1, &read_fds, NULL, NULL, NULL) == -1) {
+                        case FD_C:
 
-                            perror("Select failed.");
-                            exit(EXIT_FAILURE);
-                        }
+                            printf("client msg.\n");
+                            break;
 
-                        if(FD_ISSET(d, &read_fds)) {
+                        case FD_A:
 
-                            sensor *temp_sensor = new_sensor(-1,"NONE","NONE", -1.0);
+                            printf("admin msg.\n");
+                            break;
 
-                            //Checks if the the socket was closed by the client.
-                            if(recv(d, temp_sensor, sizeof(struct sensor), 0) <= 0) {
-
-                                printf("Socket %d disconected.\n", d);
-                                close(d);
-                                FD_CLR(d, &sensors_fds);
-                                FD_CLR(d, &master);
-                                break;
-
-                            //In case it was not closed, there is info to work with.
-                            } else {
-
-                                printf("I received: %d, %s, %s, %f, %d\n",
-                                                    temp_sensor->id,
-                                                    temp_sensor->type,
-                                                    temp_sensor->local,
-                                                    temp_sensor->firmware_version,
-                                                    temp_sensor->read_value);
-                            }
-
-                        }
+                        default:
+                            break;
                     }
-
-                } else if(i == socket_clients_client) {
-
-                    printf("socket_clients_client\n");
-
-                } else if(i == socket_admins_client) {
-
-                    printf("socket_admins_client\n");
                 }
             }
         }
