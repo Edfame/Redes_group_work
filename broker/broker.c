@@ -17,25 +17,25 @@ DELETE comes from a file
 
 void read_sensor(int sockfd, fd_set *master, identifier **fds) {
 
-    sensor *temp_sensor = new_sensor(-1, "", "", -1.0);
+    sensor *sensor = new_sensor(-1, "", "", -1.0);
 
     //Checks if the the socket was closed by the client.
-    if(recv(sockfd, temp_sensor, sizeof(struct sensor), 0) <= 0) {
+    if(recv(sockfd, sensor, sizeof(struct sensor), 0) <= 0) {
 
-        printf("Socket %d disconected.\n", sockfd);
+        printf("Socket %d disconnected.\n", sockfd);
         close(sockfd);
         FD_CLR(sockfd, master);
-
+        free(fds[sockfd]);
 
     //In case it was not closed, there is info to work with.
-    } else if(temp_sensor->id != -1) {
+    } else if(sensor->id != -1) {
 
         printf("I received: %d, %s, %s, %f, %d\n",
-                            temp_sensor->id,
-                            temp_sensor->type,
-                            temp_sensor->local,
-                            temp_sensor->firmware_version,
-                            temp_sensor->read_value);
+                            sensor->id,
+                            sensor->type,
+                            sensor->local,
+                            sensor->firmware_version,
+                            sensor->read_value);
     }
 
     free(temp_sensor);
