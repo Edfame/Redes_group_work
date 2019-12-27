@@ -17,6 +17,10 @@
 #define ADDRESS 3
 #define PORT 4
 #define READ_INTERVAL 5
+#define ID 4
+#define TYPE 5
+#define LOCAL 6
+#define FIRMWARE_VERSION 7
 
 void read_file_content(char *file_name, char *characters) {
 
@@ -131,25 +135,41 @@ int main(int argc, char const *argv[]) {
 
     char address[INFO_SIZE],
         port[INFO_SIZE],
-        read_interval[INFO_SIZE];
+        read_interval[INFO_SIZE],
+        sensor_info[INFO_SIZE],
+        id[INFO_SIZE],
+        type[INFO_SIZE],
+        local[INFO_SIZE],
+        firmware_version[INFO_SIZE];
 
+    //Get client info from a file.
     get_info(SENSOR_SETTINGS, address, ADDRESS);
     get_info(SENSOR_SETTINGS, port, PORT);
     get_info(SENSOR_SETTINGS, read_interval, READ_INTERVAL);
 
-    printf("%s\n",address);
-
     sockfd = new_socket();
 
     servaddr = set_connection_info(address, atoi(port));
-
     create_connection(sockfd, servaddr);
 
-    //Send regestry message with (ID, TYPE, LOCAL, FIRMWARE_V)
-    //(ID, TYPE, LOCAL, FIRMWARE_V) must come from YAML file.
-    sensor *sensor1 = new_sensor(4, "NO2", "Setubal", 2.0);
+    //Get sensor info from a file passed in argv[1].
+    strcpy(sensor_info, (char*) argv[1]);
 
-    send(sockfd, sensor1, sizeof(struct sensor), 0);
+    get_info(sensor_info, id, ID);
+    get_info(sensor_info, type, TYPE);
+    get_info(sensor_info, local, LOCAL);
+    get_info(sensor_info, firmware_version, FIRMWARE_VERSION);
+
+    sensor *sensor = new_sensor(atoi(id), type, local, (float) atoi(firmware_version));
+
+    printf("I sent: %d, %s, %s, %f, %d\n",
+           sensor->id,
+           sensor->type,
+           sensor->local,
+           sensor->firmware_version,
+           sensor->read_value);
+
+    send(sockfd, sensor, sizeof(struct sensor), 0);
     printf("REGISTER MSG SENT.\n");
 
     /*
@@ -164,15 +184,15 @@ int main(int argc, char const *argv[]) {
     for(;;) {
 
         sleep(atoi(read_interval));
-        sensor1->read_value = rand() % 500;
-        send(sockfd, sensor1, sizeof(struct sensor), 0);
+        sensor->read_value = rand() % 500;
+        send(sockfd, sensor, sizeof(struct sensor), 0);
 
-        printf("READ SENT: %d\n", sensor1->read_value);
+        printf("READ SENT: %d\n", sensor->read_value);
 
     }
 
     close(sockfd);
-    free(sensor1);
+    free(sensor);
 
     return 0;
 }
