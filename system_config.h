@@ -23,6 +23,11 @@ identifier *new_identifier(fd_type fd_type);
 */
 int new_socket();
 
+void read_file_content(char *file_name, char *characters);
+
+void clearArray(char string[], int length);
+
+void get_info(char *file_name, char dest[], int step);
 /*
     Sensors
 */

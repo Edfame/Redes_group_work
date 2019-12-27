@@ -12,7 +12,6 @@
 
 #define SENSOR_SETTINGS "sensor.csv"
 
-#define BUFFER_SIZE 256
 #define INFO_SIZE 16
 #define ADDRESS 3
 #define PORT 4
@@ -21,72 +20,6 @@
 #define TYPE 5
 #define LOCAL 6
 #define FIRMWARE_VERSION 7
-
-void read_file_content(char *file_name, char *characters) {
-
-    //Opens the file in read mode.
-    FILE *file = fopen(file_name, "r");
-
-    if(file == NULL) {
-        printf("No such file \"%s\"\n", file_name);
-        exit(EXIT_FAILURE);
-
-    } else {
-
-        printf("Openned: %s\n", file_name);
-    }
-
-    char character;
-
-    for(int i = 0; i < BUFFER_SIZE; i++) {
-
-        character = fgetc(file);
-
-       if (character != EOF) {
-
-            characters[i] = character;
-        }
-    }
-
-    fclose(file);
-}
-
-void clearArray(char string[], int length) {
-    int i = 0;
-    while(i < length)
-    {
-        string[i]='\0';
-        i++;
-    }
-}
-
-void get_info(char *file_name, char dest[], int step) {
-    int i = 0;
-    short commaCounter = 0;
-
-    char src[BUFFER_SIZE];
-    clearArray(src, BUFFER_SIZE);
-    read_file_content(file_name, src);
-
-    while(commaCounter<step)
-    {
-        if(src[i]==',' || src[i] == '\n')
-        {
-            commaCounter++;
-        }
-        i++;
-    }
-
-    int j = 0;
-
-    clearArray(dest, INFO_SIZE);
-    while(src[i]!=',' && src[i]!='\0')
-    {
-        dest[j]=src[i];
-        j++;
-        i++;
-    }
-}
 
 struct sockaddr_in set_connection_info(char *hostname, int port) {
 

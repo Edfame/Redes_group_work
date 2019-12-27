@@ -7,13 +7,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-/*
-DELETE comes from a file
-*/
-#define SENSOR_PORT 79790
-#define CLIENT_PORT 13375
-#define ADMIN_PORT 42069
+#define BROKER_SETINGS "broker.csv"
+
+#define SENSOR_PORT 3
+#define CLIENT_PORT 4
+#define ADMIN_PORT 5
+
 #define MAX_CLIENTS 200
+#define INFO_SIZE 16
 
 void read_sensor(int sockfd, fd_set *master, identifier **fds) {
 
@@ -38,7 +39,7 @@ void read_sensor(int sockfd, fd_set *master, identifier **fds) {
                             sensor->read_value);
     }
 
-    free(temp_sensor);
+    free(sensor);
 }
 
 int max(int first_number, int second_number) {
@@ -148,6 +149,14 @@ int main(int argc, char const *argv[]) {
         option,
         fds_max;
 
+    char sensor_port[INFO_SIZE],
+         client_port[INFO_SIZE],
+         admin_port[INFO_SIZE];
+
+    get_info(BROKER_SETINGS, sensor_port, SENSOR_PORT);
+    get_info(BROKER_SETINGS, client_port, CLIENT_PORT);
+    get_info(BROKER_SETINGS, admin_port, ADMIN_PORT);
+
     option = 1;
     fds_max = 0;
 
@@ -166,9 +175,9 @@ int main(int argc, char const *argv[]) {
     set_option(socket_clients_server, option);
     set_option(socket_admins_server, option);
 
-    sensors = set_connection_info(SENSOR_PORT);
-    clients = set_connection_info(CLIENT_PORT);
-    admins = set_connection_info(ADMIN_PORT);
+    sensors = set_connection_info(atoi(sensor_port));
+    clients = set_connection_info(atoi(client_port));
+    admins = set_connection_info(atoi(admin_port));
 
     //Binding the socket_servers to the info.
     bind_connection(socket_sensors_server, sensors);
