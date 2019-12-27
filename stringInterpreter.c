@@ -2,54 +2,54 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define LOCAL 2
-#define TIPO 1
-#define VERSAO 3
-#define ID 0
+#define BUFFER_SIZE 256
 
-//ID tipo local versão firmware
+#define ADDRESS 3
+#define PORT 4
+#define READ_INTERVAL 5
 
-void clearArray(char string[], char fill, int length)
-{
-	int i = 0;
-	while(i < length)
-	{
-		string[i]=fill;
-		i++;
-	}
+char* read_file_content(char *file_name, char *characters) {
+
+    //Opens the file in read mode.
+    FILE *file = fopen(file_name, "r");
+
+    if(file == NULL) {
+        printf("No such file \"%s\"\n", file_name);
+        exit(EXIT_FAILURE);
+
+    } else {
+
+        printf("Openned: %s\n", file_name);
+    }
+
+    char character;
+
+    for(int i = 0; i < BUFFER_SIZE; i++) {
+
+        character = fgetc(file);
+
+       if (character != EOF) {
+
+            characters[i] = character;
+        }
+    }
+
+    fclose(file);
+    return characters;
 }
 
-void getInfo(char message[], char sensor[], int step)
-{
-	int i = 0;
-	short commaCounter = 0;
+char* get_info(char *file_name, int field) {
 
-	while(commaCounter<step)
-	{
-		if(sensor[i]==',')
-		{
-			commaCounter++;
-		}
-		i++;
-	}
+    char content[BUFFER_SIZE];
+    read_file_content("test.csv", content);
 
-	int j = 0;
+    char *messageAux;
 
-	while(sensor[i]!=',' && sensor[i]!='\0')
-	{
-		message[j]=sensor[i];
-		j++;
-		i++;
-	}
-}
+    messageAux = strtok(content,",\n");
 
-int main()
-{
-	char sensor[] = {'a',',','b',',','a','c','d',',','z','\0'};
-	char messageAux[20];
-	clearArray(messageAux,'\0', 20);
-	getInfo(messageAux,sensor,VERSAO);
-	printf("%s\n", messageAux);
+    for(int i = 0; i < PORT; i++) {
+        messageAux = strtok(NULL,",\n");
+    }
 
-	return 0;
+    return messageAux;
 }
