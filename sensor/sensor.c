@@ -10,16 +10,6 @@
 #include <unistd.h>
 #include <time.h>
 
-#define SENSOR_SETTINGS "sensor.csv"
-
-#define ADDRESS 3
-#define PORT 4
-#define READ_INTERVAL 5
-#define ID 4
-#define TYPE 5
-#define LOCAL 6
-#define FIRMWARE_VERSION 7
-
 struct sockaddr_in set_connection_info(char *hostname, int port) {
 
     struct sockaddr_in servaddr;

@@ -1,10 +1,29 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
+/*
+ * SENSOR
+ */
+
+#define SENSOR_SETTINGS "sensor.csv"
+
+#define ADDRESS 3
+#define PORT 4
+#define READ_INTERVAL 5
+#define ID 4
+#define TYPE 5
+#define LOCAL 6
+#define FIRMWARE_VERSION 7
+#define UNIT "µg/m³"
+#define READ_AMOUNTS 10
+
+/*
+ * GENERAL
+ */
+
 #define BUFFER_SIZE 256
 #define INFO_SIZE 16
 #define DATE_SIZE 12
-#define UNIT "µg/m³"
 
 typedef enum fd_type {
 
