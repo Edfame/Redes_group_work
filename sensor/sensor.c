@@ -12,7 +12,6 @@
 
 #define SENSOR_SETTINGS "sensor.csv"
 
-#define INFO_SIZE 16
 #define ADDRESS 3
 #define PORT 4
 #define READ_INTERVAL 5
@@ -63,22 +62,33 @@ void create_connection(int sockfd, struct sockaddr_in servaddr) {
 
 int main(int argc, char const *argv[]) {
 
-    int sockfd;
+    int sockfd,
+        read;
     struct sockaddr_in servaddr;
 
-    char address[INFO_SIZE],
+    time_t now;
+    struct tm *time_info;
+
+    char settings[BUFFER_SIZE],
+        address[INFO_SIZE],
         port[INFO_SIZE],
         read_interval[INFO_SIZE],
-        sensor_info[INFO_SIZE],
+        sensor_info_file[INFO_SIZE],
+        sensor_info[BUFFER_SIZE],
         id[INFO_SIZE],
         type[INFO_SIZE],
         local[INFO_SIZE],
-        firmware_version[INFO_SIZE];
+        firmware_version[INFO_SIZE],
+        date[DATE_SIZE],
+        buffer[BUFFER_SIZE];
 
     //Get client info from a file.
-    get_info(SENSOR_SETTINGS, address, ADDRESS);
-    get_info(SENSOR_SETTINGS, port, PORT);
-    get_info(SENSOR_SETTINGS, read_interval, READ_INTERVAL);
+    clearArray(settings, BUFFER_SIZE);
+    read_file_content(SENSOR_SETTINGS, settings);
+
+    get_info(settings, address, ADDRESS);
+    get_info(settings, port, PORT);
+    get_info(settings, read_interval, READ_INTERVAL);
 
     sockfd = new_socket();
 
@@ -86,46 +96,44 @@ int main(int argc, char const *argv[]) {
     create_connection(sockfd, servaddr);
 
     //Get sensor info from a file passed in argv[1].
-    strcpy(sensor_info, (char*) argv[1]);
+    strcpy(sensor_info_file, (char*) argv[1]);
+
+    clearArray(sensor_info, BUFFER_SIZE);
+    read_file_content(sensor_info_file, sensor_info);
 
     get_info(sensor_info, id, ID);
     get_info(sensor_info, type, TYPE);
     get_info(sensor_info, local, LOCAL);
     get_info(sensor_info, firmware_version, FIRMWARE_VERSION);
 
-    sensor *sensor = new_sensor(atoi(id), type, local, (float) atoi(firmware_version));
+    //Creates the register message.
+    snprintf(buffer, sizeof(buffer), "%s,%s,%s,%s", id, type, local, firmware_version);
 
-    printf("I sent: %d, %s, %s, %f, %d\n",
-           sensor->id,
-           sensor->type,
-           sensor->local,
-           sensor->firmware_version,
-           sensor->read_value);
-
-    send(sockfd, sensor, sizeof(struct sensor), 0);
-    printf("REGISTER MSG SENT.\n");
-
-    /*
-    Every X seconds, that comes from YAML file (read_interval), sends a sensor read.
-    For now, every read is a radom value.
-    */
-
-    //read_interval_int = atoi(read_interval);
+    //Sends the register message.
+    send(sockfd, buffer, sizeof(buffer), 0);
 
     srand(time(NULL));
-
+    /*
+    Every X seconds (read_interval), sends a sensor read.
+    For now, every read is a radom value.
+    */
     for(;;) {
 
-        sleep(atoi(read_interval));
-        sensor->read_value = rand() % 500;
-        send(sockfd, sensor, sizeof(struct sensor), 0);
+        time(&now);
+        time_info = localtime(&now);
 
-        printf("READ SENT: %d\n", sensor->read_value);
+        sleep(atoi(read_interval));
+        read = rand() % 500;
+
+        snprintf(date, sizeof(date), "%d/%d/%d", time_info->tm_mday, time_info->tm_mon + 1, time_info->tm_year + 1900);
+        snprintf(buffer, sizeof(buffer), "%s,%s,%d,%s,%s", id, date, read, UNIT, firmware_version);
+
+        send(sockfd, buffer, sizeof(buffer), 0);
+
+        printf("READ SENT: %s", buffer);
 
     }
 
     close(sockfd);
-    free(sensor);
-
     return 0;
 }

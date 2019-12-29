@@ -18,10 +18,10 @@
 
 void read_sensor(int sockfd, fd_set *master, identifier **fds) {
 
-    sensor *sensor = new_sensor(-1, "", "", -1.0);
+    char buffer[BUFFER_SIZE];
 
     //Checks if the the socket was closed by the client.
-    if(recv(sockfd, sensor, sizeof(struct sensor), 0) <= 0) {
+    if(recv(sockfd, buffer, sizeof(buffer), 0) <= 0) {
 
         printf("Socket %d disconnected.\n", sockfd);
         close(sockfd);
@@ -29,17 +29,10 @@ void read_sensor(int sockfd, fd_set *master, identifier **fds) {
         free(fds[sockfd]);
 
     //In case it was not closed, there is info to work with.
-    } else if(sensor->id != -1) {
+    } else {
 
-        printf("I received: %d, %s, %s, %f, %d\n",
-                            sensor->id,
-                            sensor->type,
-                            sensor->local,
-                            sensor->firmware_version,
-                            sensor->read_value);
+        printf("I received: %s", buffer);
     }
-
-    free(sensor);
 }
 
 int max(int first_number, int second_number) {
@@ -266,6 +259,7 @@ int main(int argc, char const *argv[]) {
 
                         case FD_S:
 
+                            printf("sensor msg: ");
                             read_sensor(i, &master, fds);
                             break;
 

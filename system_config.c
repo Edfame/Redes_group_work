@@ -5,9 +5,6 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#define BUFFER_SIZE 256
-#define INFO_SIZE 16
-
 identifier *new_identifier(fd_type fd_type) {
 
     identifier *new_identifier = malloc(sizeof(struct identifier));
@@ -35,19 +32,7 @@ int new_socket() {
     return new_socket;
 }
 
-sensor *new_sensor(short id, char type[], char local[], float firmware_version) {
-
-    sensor *new_sensor = malloc(sizeof(struct sensor));
-
-    new_sensor->id = id;
-    strcpy(new_sensor->type, type);
-    strcpy(new_sensor->local, local);
-    new_sensor->firmware_version = firmware_version;
-
-    return new_sensor;
-}
-
-void read_file_content(char *file_name, char *characters) {
+void read_file_content(char *file_name, char *dest) {
 
     //Opens the file in read mode.
     FILE *file = fopen(file_name, "r");
@@ -69,7 +54,7 @@ void read_file_content(char *file_name, char *characters) {
 
         if (character != EOF) {
 
-            characters[i] = character;
+            dest[i] = character;
         }
     }
 
@@ -85,13 +70,9 @@ void clearArray(char string[], int length) {
     }
 }
 
-void get_info(char *file_name, char dest[], int step) {
+void get_info(char *src, char *dest, int step) {
     int i = 0;
     short commaCounter = 0;
-
-    char src[BUFFER_SIZE];
-    clearArray(src, BUFFER_SIZE);
-    read_file_content(file_name, src);
 
     while(commaCounter<step)
     {

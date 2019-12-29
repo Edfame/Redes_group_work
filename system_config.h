@@ -1,6 +1,11 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
+#define BUFFER_SIZE 256
+#define INFO_SIZE 16
+#define DATE_SIZE 12
+#define UNIT "µg/m³"
+
 typedef enum fd_type {
 
     NONE,
@@ -23,27 +28,10 @@ identifier *new_identifier(fd_type fd_type);
 */
 int new_socket();
 
-void read_file_content(char *file_name, char *characters);
+void read_file_content(char *file_name, char *dest);
 
 void clearArray(char string[], int length);
 
-void get_info(char *file_name, char dest[], int step);
-/*
-    Sensors
-*/
-#define LOCAL_SIZE 32
-#define TYPE_SIZE 3
-
-typedef struct sensor {
-
-    short id;
-    char type[TYPE_SIZE];
-    char local[LOCAL_SIZE];
-    float firmware_version;
-    short read_value;
-
-} sensor;
-
-sensor *new_sensor(short id, char type[], char local[], float firmware_version);
+void get_info(char *src, char *dest, int step);
 
 #endif
