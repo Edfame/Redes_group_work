@@ -1,15 +1,14 @@
 #include "system_config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-
 identifier *new_identifier(fd_type fd_type) {
 
     identifier *new_identifier = malloc(sizeof(struct identifier));
 
     new_identifier->type = fd_type;
+    new_identifier->client_info = NULL;
+    //TODO
+    // new_identifier->last_reads = NULL;
+    new_identifier->subscribed_sensors = NULL;
 
     return new_identifier;
 }

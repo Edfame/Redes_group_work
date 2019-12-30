@@ -1,12 +1,5 @@
 #include "../system_config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-
 #define BROKER_SETINGS "broker.csv"
 
 #define SENSOR_PORT 3
@@ -16,11 +9,15 @@
 #define MAX_CLIENTS 200
 #define INFO_SIZE 16
 
+/*
+ * read_sensor - if the connection was not closed  by the client, reads the info sent.
+ *               registers it or adds more info.
+ */
 void read_sensor(int sockfd, fd_set *master, identifier **fds) {
 
     char buffer[BUFFER_SIZE];
+    identifier *fd = fds[sockfd];
 
-    //Checks if the the socket was closed by the client.
     if(recv(sockfd, buffer, sizeof(buffer), 0) <= 0) {
 
         printf("Socket %d disconnected.\n", sockfd);
@@ -28,10 +25,17 @@ void read_sensor(int sockfd, fd_set *master, identifier **fds) {
         FD_CLR(sockfd, master);
         free(fds[sockfd]);
 
-    //In case it was not closed, there is info to work with.
     } else {
 
-        printf("I received: %s", buffer);
+        if (fd->last_reads == NULL) {
+            strncpy(fd->client_info, buffer, sizeof(buffer));
+            //TODO
+            // fd->last_reads = new_queue();
+
+        } else {
+            //TODO
+            // queue_add(buffer,fd->last_reads);
+        }
     }
 }
 
@@ -48,7 +52,6 @@ int max3(int first_number, int second_number, int third_number) {
 void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type) {
 
     *fds_max = max(*fds_max, socket_client);
-    //fds = realloc(fds, (int)(*fds_max) + 1);
     fds[socket_client] = new_identifier(type);
 }
 
@@ -224,6 +227,7 @@ int main(int argc, char const *argv[]) {
                     printf("New sensor registred.\n");
 
                     fds_realloc(&fds_max, socket_sensors_client, fds, FD_S);
+
                 /*
                     Handeling new clients connecting
                 */

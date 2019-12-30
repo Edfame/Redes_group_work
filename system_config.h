@@ -1,6 +1,18 @@
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <time.h>
+
 /*
  * SENSOR
  */
@@ -37,6 +49,10 @@ typedef enum fd_type {
 typedef struct identifier{
 
     fd_type type;
+    char *client_info;
+    //TODO
+    // queue *last_reads;
+    int *subscribed_sensors;
 
 } identifier;
 
