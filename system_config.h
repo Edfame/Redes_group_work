@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <time.h>
 
+#include "queue/queue.h"
+
 /*
  * SENSOR
  */
@@ -50,8 +52,7 @@ typedef struct identifier{
 
     fd_type type;
     char *client_info;
-    //TODO
-    // queue *last_reads;
+    queue *last_reads;
     int *subscribed_sensors;
 
 } identifier;

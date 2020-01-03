@@ -62,6 +62,13 @@ int main(int argc, char const *argv[]) {
         date[DATE_SIZE],
         buffer[BUFFER_SIZE];
 
+    //Get sensor info from a file passed in argv[1].
+    if (argc < 2) {
+        printf("\nUSAGE ERROR.\nUsage: ./sensor SENSOR_SETINGS.csv\n\n");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(sensor_info_file, (char*) argv[1]);
+
     //Get client info from a file.
     clearArray(settings, BUFFER_SIZE);
     read_file_content(SENSOR_SETTINGS, settings);
@@ -74,9 +81,6 @@ int main(int argc, char const *argv[]) {
 
     servaddr = set_connection_info(address, atoi(port));
     create_connection(sockfd, servaddr);
-
-    //Get sensor info from a file passed in argv[1].
-    strcpy(sensor_info_file, (char*) argv[1]);
 
     clearArray(sensor_info, BUFFER_SIZE);
     read_file_content(sensor_info_file, sensor_info);
@@ -108,7 +112,10 @@ int main(int argc, char const *argv[]) {
         snprintf(date, sizeof(date), "%d/%d/%d", time_info->tm_mday, time_info->tm_mon + 1, time_info->tm_year + 1900);
         snprintf(buffer, sizeof(buffer), "%s,%s,%d,%s,%s", id, date, read, UNIT, firmware_version);
 
-        send(sockfd, buffer, sizeof(buffer), 0);
+        if(send(sockfd, buffer, sizeof(buffer), 0) <= 0){
+            printf("Server hung out. Cya!\n");
+            exit(EXIT_FAILURE);
+        }
 
         printf("READ SENT: %s", buffer);
 

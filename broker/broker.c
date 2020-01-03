@@ -1,6 +1,6 @@
 #include "../system_config.h"
 
-#define BROKER_SETINGS "broker.csv"
+#define BROKER_SETTINGS "broker.csv"
 
 #define SENSOR_PORT 3
 #define CLIENT_PORT 4
@@ -28,13 +28,14 @@ void read_sensor(int sockfd, fd_set *master, identifier **fds) {
     } else {
 
         if (fd->last_reads == NULL) {
-            strncpy(fd->client_info, buffer, sizeof(buffer));
-            //TODO
-            // fd->last_reads = new_queue();
+            fd->client_info = malloc(sizeof(buffer));
+            strcpy(fd->client_info, buffer);
+            printf("new client: %s", fd->client_info);
+            fd->last_reads = new_queue();
 
         } else {
-            //TODO
-            // queue_add(buffer,fd->last_reads);
+            printf("read: %s", buffer);
+            queue_insert(fd->last_reads, buffer);
         }
     }
 }
@@ -145,13 +146,17 @@ int main(int argc, char const *argv[]) {
         option,
         fds_max;
 
-    char sensor_port[INFO_SIZE],
+    char broker_settings[BUFFER_SIZE],
+         sensor_port[INFO_SIZE],
          client_port[INFO_SIZE],
          admin_port[INFO_SIZE];
 
-    get_info(BROKER_SETINGS, sensor_port, SENSOR_PORT);
-    get_info(BROKER_SETINGS, client_port, CLIENT_PORT);
-    get_info(BROKER_SETINGS, admin_port, ADMIN_PORT);
+    clearArray(broker_settings, BUFFER_SIZE);
+    read_file_content(BROKER_SETTINGS, broker_settings);
+
+    get_info(broker_settings, sensor_port, SENSOR_PORT);
+    get_info(broker_settings, client_port, CLIENT_PORT);
+    get_info(broker_settings, admin_port, ADMIN_PORT);
 
     option = 1;
     fds_max = 0;
@@ -166,7 +171,7 @@ int main(int argc, char const *argv[]) {
     socket_clients_server = new_socket();
     socket_admins_server = new_socket();
 
-    //Teeling se OS to do not reserve that port.
+    //Telling se OS to do not reserve that port.
     set_option(socket_sensors_server, option);
     set_option(socket_clients_server, option);
     set_option(socket_admins_server, option);
@@ -263,7 +268,6 @@ int main(int argc, char const *argv[]) {
 
                         case FD_S:
 
-                            printf("sensor msg: ");
                             read_sensor(i, &master, fds);
                             break;
 
