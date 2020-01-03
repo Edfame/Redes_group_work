@@ -35,25 +35,22 @@ void read_file_content(char *file_name, char *dest) {
     //Opens the file in read mode.
     FILE *file = fopen(file_name, "r");
 
-    if(file == NULL) {
+    if(file == NULL)
+    {
         printf("No such file \"%s\"\n", file_name);
         exit(EXIT_FAILURE);
 
     } else {
-
-        printf("Openned: %s\n", file_name);
+        printf("Opened: %s\n", file_name);
     }
 
-    char character;
+    char buffer[BUFFER_SIZE];
 
-    for(int i = 0; i < BUFFER_SIZE; i++) {
+    while(fscanf(file, "%s", buffer)!=EOF)
+    {
+        strcat(buffer,",");
+        strcat(dest,buffer);
 
-        character = fgetc(file);
-
-        if (character != EOF) {
-
-            dest[i] = character;
-        }
     }
 
     fclose(file);
@@ -68,26 +65,23 @@ void clearArray(char string[], int length) {
     }
 }
 
-void get_info(char *src, char *dest, int step) {
-    int i = 0;
-    short commaCounter = 0;
+void get_info(char *src, char *dest, int step)
+{
 
-    while(commaCounter<step)
+    char src_cpy[BUFFER_SIZE],
+        *token;
+
+    clearArray(src_cpy, BUFFER_SIZE);
+    strcpy(src_cpy, src);
+    token = strtok(src_cpy, ",\n");
+
+    int counter = 0;
+
+    while(counter<step)
     {
-        if(src[i]==',' || src[i] == '\n')
-        {
-            commaCounter++;
-        }
-        i++;
+        token = strtok(NULL, ",\n");
+        counter++;
     }
 
-    int j = 0;
-
-    clearArray(dest, INFO_SIZE);
-    while(src[i]!=',' && src[i]!='\0')
-    {
-        dest[j]=src[i];
-        j++;
-        i++;
-    }
+    strcpy(dest,token);
 }
