@@ -1,45 +1,5 @@
 #include "../system_config.h"
 
-struct sockaddr_in set_connection_info(char *hostname, int port) {
-
-    struct sockaddr_in servaddr;
-    struct hostent *server;
-
-    server = gethostbyname(hostname);
-
-    //Checking if the hostname provided was a valid one.
-    if(server == NULL) {
-        fprintf(stderr, "ERROR, no such host.\n");
-        exit(1);
-    }
-
-    /*
-        Copying the necessary info from "server" to "servaddr".
-    */
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(port);
-    bcopy((char *) server->h_addr, (char *) &servaddr.sin_addr.s_addr, server->h_length);
-
-    return servaddr;
-}
-
-void create_connection(int sockfd, struct sockaddr_in servaddr) {
-
-    //if the connection to the server doesn't succeed.
-    if(connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
-
-        perror(">Connection to the server failed.\nAborted.\n");
-        exit(2);
-
-    //if the connection to the server succeeds.
-    } else {
-
-        char addr[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &(servaddr.sin_addr), addr, INET_ADDRSTRLEN);
-        printf(">Connection established with: %s.\n", addr);
-    }
-}
-
 int main(int argc, char const *argv[]) {
 
     int sockfd,
@@ -62,26 +22,32 @@ int main(int argc, char const *argv[]) {
         date[DATE_SIZE],
         buffer[BUFFER_SIZE];
 
-    //Get sensor info from a file passed in argv[1].
+    //Get sensor info file path passed in argv[1].
     if (argc < 2) {
-        printf("\nUSAGE ERROR.\nUsage: ./sensor SENSOR_SETINGS.csv\n\n");
+        printf("\nUSAGE ERROR.\nUsage: ./sensor SENSOR_SETTINGS.csv\n\n");
         exit(EXIT_FAILURE);
     }
     strcpy(sensor_info_file, (char*) argv[1]);
 
-    //Get client info from a file.
+    //Get connection info from a file.
     clearArray(settings, BUFFER_SIZE);
     read_file_content(SENSOR_SETTINGS, settings);
 
+    //Sorting the info.
     get_info(settings, address, ADDRESS);
     get_info(settings, port, PORT);
     get_info(settings, read_interval, READ_INTERVAL);
 
+    //Creating a new socket for the sensor.
     sockfd = new_socket();
 
+    //Setting connection info.
     servaddr = set_connection_info(address, atoi(port));
+
+    //Establishing the connection.
     create_connection(sockfd, servaddr);
 
+    //Get sensor info from file.
     clearArray(sensor_info, BUFFER_SIZE);
     read_file_content(sensor_info_file, sensor_info);
 
@@ -104,6 +70,7 @@ int main(int argc, char const *argv[]) {
     for(;;) {
 
         time(&now);
+        time_info = localtime(&now);
         time_info = localtime(&now);
 
         sleep(atoi(read_interval));

@@ -9,34 +9,42 @@
 #define MAX_CLIENTS 200
 #define INFO_SIZE 16
 
+void new_register(identifier *fd, char *info) {
+
+    fd->client_info = malloc(sizeof(info));
+    strcpy(fd->client_info, info);
+    printf("new client: %s", fd->client_info);
+
+}
+
+void disconnected(int sockfd, fd_set *master, identifier *fd) {
+
+    printf("Socket %d disconnected.\n", sockfd);
+    close(sockfd);
+    FD_CLR(sockfd, master);
+    free(fd);
+
+}
+
+void read_admin(char *buffer, identifier *fd) {
+
+    /*TODO
+     * according to the message received on buffer, decide which make.
+     */
+}
 /*
  * read_sensor - if the connection was not closed  by the client, reads the info sent.
  *               registers it or adds more info.
  */
-void read_sensor(int sockfd, fd_set *master, identifier **fds) {
+void read_sensor(char *buffer, identifier *fd) {
 
-    char buffer[BUFFER_SIZE];
-    identifier *fd = fds[sockfd];
-
-    if(recv(sockfd, buffer, sizeof(buffer), 0) <= 0) {
-
-        printf("Socket %d disconnected.\n", sockfd);
-        close(sockfd);
-        FD_CLR(sockfd, master);
-        free(fds[sockfd]);
+    if (fd->last_reads == NULL) {
+        new_register(fd, buffer);
+        fd->last_reads = new_queue();
 
     } else {
-
-        if (fd->last_reads == NULL) {
-            fd->client_info = malloc(sizeof(buffer));
-            strcpy(fd->client_info, buffer);
-            printf("new client: %s", fd->client_info);
-            fd->last_reads = new_queue();
-
-        } else {
-            printf("read: %s", buffer);
-            queue_insert(fd->last_reads, buffer);
-        }
+        printf("read: %s", buffer);
+        queue_insert(fd->last_reads, buffer);
     }
 }
 
@@ -149,7 +157,8 @@ int main(int argc, char const *argv[]) {
     char broker_settings[BUFFER_SIZE],
          sensor_port[INFO_SIZE],
          client_port[INFO_SIZE],
-         admin_port[INFO_SIZE];
+         admin_port[INFO_SIZE],
+         buffer[BUFFER_SIZE];
 
     clearArray(broker_settings, BUFFER_SIZE);
     read_file_content(BROKER_SETTINGS, broker_settings);
@@ -164,7 +173,8 @@ int main(int argc, char const *argv[]) {
     fd_set master,
             read_fds;
 
-    identifier **fds;
+    identifier **fds,
+                *fd;
 
     //Creating a new socket for incoming connections.
     socket_sensors_server = new_socket();
@@ -264,25 +274,35 @@ int main(int argc, char const *argv[]) {
                 */
                 } else {
 
-                    switch(fds[i]->type) {
+                    fd = fds[i];
 
-                        case FD_S:
+                    if(recv(i, buffer, sizeof(buffer), 0) <= 0) {
 
-                            read_sensor(i, &master, fds);
-                            break;
+                        disconnected(i, &master, fd);
 
-                        case FD_C:
+                    } else {
 
-                            printf("client msg.\n");
-                            break;
+                        switch(fd->type) {
 
-                        case FD_A:
+                            case FD_S:
 
-                            printf("admin msg.\n");
-                            break;
+                                read_sensor(i, buffer, &master, fd);
+                                break;
 
-                        default:
-                            break;
+                            case FD_C:
+
+                                printf("client msg.\n");
+                                break;
+
+                            case FD_A:
+
+                                printf("admin msg.\n");
+                                break;
+
+                            default:
+                                break;
+                        }
+
                     }
                 }
             }

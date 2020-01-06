@@ -32,6 +32,16 @@
 #define READ_AMOUNTS 10
 
 /*
+ * ADMIN
+ */
+
+#define ADMIN_SETTINGS "admin.csv"
+
+#define ADMIN_ADDRESS 2
+#define ADMIN_PORT 3
+#define ADMIN_ID 2
+#define ADMIN_NICKNAME 3
+/*
  * GENERAL
  */
 
@@ -63,6 +73,10 @@ identifier *new_identifier(fd_type fd_type);
     General
 */
 int new_socket();
+
+struct sockaddr_in set_connection_info(char *hostname, int port);
+
+void create_connection(int sockfd, struct sockaddr_in servaddr);
 
 void read_file_content(char *file_name, char *dest);
 
