@@ -23,11 +23,12 @@ void list_all_sensors(int sockfd, char operation) {
     }
 }
 
-void get_last_read(int sockfd, char op, char *buffer) {
+void get_last_read(int sockfd, char op, char *id) {
 
-    printf("%s's last read: ", buffer);
+    char buffer[INFO_SIZE];
+    clearArray(buffer, BUFFER_SIZE);
 
-    snprintf(buffer, sizeof(buffer), "%c,%s", op, buffer);
+    snprintf(buffer, sizeof(buffer), "%c,%s", op, id);
 
     //Sending: "operation,ID".
     send(sockfd, buffer, sizeof(buffer), 0);
@@ -35,7 +36,7 @@ void get_last_read(int sockfd, char op, char *buffer) {
     //Receiving: "read_value".
     recv(sockfd, buffer, sizeof(buffer), 0);
 
-    printf("%s\n", buffer);
+    printf("%s's last read: %s\n", id, buffer);
 }
 
 int main(int argc, char const *argv[]) {
@@ -97,7 +98,7 @@ int main(int argc, char const *argv[]) {
      */
     print_operations();
 
-    while (scanf("%c", &operation) != EOF) {
+    while (scanf(" %c", &operation) != EOF) {
 
         switch (operation) {
 
@@ -117,8 +118,6 @@ int main(int argc, char const *argv[]) {
                 break;
 
             case '3':
-                break;
-            case '4':
                 break;
 
             default:

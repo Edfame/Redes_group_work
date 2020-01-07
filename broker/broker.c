@@ -38,9 +38,7 @@ void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_
     }
 }
 
-char *list_all_sensors(int fds_max, identifier **fds) {
-
-    char to_return[BUFFER_SIZE];
+void list_all_sensors(int fds_max, identifier **fds, char *to_return) {
 
     clearArray(to_return, BUFFER_SIZE);
 
@@ -48,14 +46,14 @@ char *list_all_sensors(int fds_max, identifier **fds) {
 
         if(fds[i]->type == FD_S) {
 
-            snprintf(to_return, sizeof(to_return), "%s;%s;", fds[i]->client_info, to_return);
+            strcat(to_return, fds[i]->client_info);
+            strcat(to_return, ADMIN_DELIM);
+
         }
     }
-
-    return to_return;
 }
 
-void read_admin(int sockfd, char *buffer, int fds_max, identifier **fds) {
+void read_admin(char *buffer, char *return_buffer, int fds_max, identifier **fds) {
 
     /*TODO
      * according to the message received on buffer, decide which make.
@@ -65,8 +63,9 @@ void read_admin(int sockfd, char *buffer, int fds_max, identifier **fds) {
           id_index = 1;
 
     char id[INFO_SIZE],
-         return_buffer[INFO_SIZE],
          operation = buffer[operation_index];
+
+    clearArray(id, INFO_SIZE);
 
     switch (operation) {
 
@@ -74,15 +73,11 @@ void read_admin(int sockfd, char *buffer, int fds_max, identifier **fds) {
 
             get_info(buffer, id, id_index, DELIM);
             get_sensor_last_read(id, fds_max, fds, return_buffer);
-
-            send(sockfd, return_buffer, sizeof(return_buffer), 0);
             break;
 
         case '1':
 
-            strcpy(return_buffer, list_all_sensors(fds_max, fds));
-
-            send(sockfd, return_buffer, sizeof(return_buffer), 0);
+            list_all_sensors(fds_max, fds, return_buffer);
             break;
 
         case '2':
@@ -90,8 +85,6 @@ void read_admin(int sockfd, char *buffer, int fds_max, identifier **fds) {
             break;
 
         case '3':
-            break;
-        case '4':
             break;
 
         default:
@@ -102,16 +95,26 @@ void read_admin(int sockfd, char *buffer, int fds_max, identifier **fds) {
  * read_sensor - if the connection was not closed  by the client, reads the info sent.
  *               registers it or adds more info.
  */
-void read_sensor(char *buffer, identifier *fd) {
+void read_sensor(int sockfd, char *buffer, identifier *fd) {
 
     if (fd->last_reads == NULL) {
+
         new_register(fd, buffer);
         fd->last_reads = new_queue();
+        printf("%d\n", fd->last_reads->size);
 
     } else {
-        printf("read: %s", buffer);
+
+        char id[INFO_SIZE];
+
+        get_info(fd->client_info, id, 0, DELIM);
+        printf("ID: %s\tREAD_SENSOR: %s\n", id, buffer);
         queue_insert(fd->last_reads, buffer);
     }
+
+    char *received = "RECEIVED.";
+
+    send(sockfd, received, sizeof(received), 0);
 }
 
 int max(int first_number, int second_number) {
@@ -207,7 +210,8 @@ int main(int argc, char const *argv[]) {
          sensor_port[INFO_SIZE],
          client_port[INFO_SIZE],
          admin_port[INFO_SIZE],
-         buffer[BUFFER_SIZE];
+         buffer[BUFFER_SIZE],
+         return_buffer[BUFFER_SIZE];
 
     clearArray(broker_settings, BUFFER_SIZE);
     read_file_content(BROKER_SETTINGS, broker_settings);
@@ -335,7 +339,7 @@ int main(int argc, char const *argv[]) {
 
                             case FD_S:
 
-                                read_sensor(buffer, fd);
+                                read_sensor(i, buffer, fd);
                                 break;
 
                             case FD_C:
@@ -345,7 +349,7 @@ int main(int argc, char const *argv[]) {
 
                             case FD_A:
 
-                                read_admin(i, buffer, fds_max, fds);
+                                read_admin(buffer, return_buffer, fds_max, fds);
                                 printf("admin msg.\n");
                                 break;
 
@@ -353,6 +357,7 @@ int main(int argc, char const *argv[]) {
                                 break;
                         }
 
+                        send(i, return_buffer, sizeof(return_buffer), 0);
                     }
                 }
             }

@@ -79,13 +79,15 @@ int main(int argc, char const *argv[]) {
         snprintf(date, sizeof(date), "%d/%d/%d", time_info->tm_mday, time_info->tm_mon + 1, time_info->tm_year + 1900);
         snprintf(buffer, sizeof(buffer), "%s,%s,%d,%s,%s", id, date, read, UNIT, firmware_version);
 
-        if(send(sockfd, buffer, sizeof(buffer), 0) <= 0){
-            printf("Server hung out. Cya!\n");
-            exit(EXIT_FAILURE);
+        send(sockfd, buffer, sizeof(buffer), 0);
+
+        printf("READ SENT: %s\n", buffer);
+
+        //Firmware updated received.
+        if(recv(sockfd, buffer, sizeof(buffer), 0) >= 0) {
+            //TODO Handle update.
+            printf("UPDATE: %s\n", buffer);
         }
-
-        printf("READ SENT: %s", buffer);
-
     }
 
     close(sockfd);
