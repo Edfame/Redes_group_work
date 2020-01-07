@@ -15,7 +15,7 @@ void list_all_sensors(int sockfd, char operation) {
 
     send(sockfd, buffer, sizeof(buffer), 0);
 
-    read(sockfd, buffer, sizeof(buffer), 0);
+    recv(sockfd, buffer, sizeof(buffer), 0);
 
     for (int i = 0; i < strlen(buffer); ++i) {
         get_info(buffer, to_print, i, ADMIN_DELIM);
@@ -67,8 +67,8 @@ int main(int argc, char const *argv[]) {
     read_file_content(ADMIN_SETTINGS, admin_settings);
 
     //Sorting the info.
-    get_info(admin_settings, address, ADMIN_ADDRESS);
-    get_info(admin_settings, port, ADMIN_PORT);
+    get_info(admin_settings, address, ADMIN_ADDRESS, DELIM);
+    get_info(admin_settings, port, ADMIN_PORT_CLIENT, DELIM);
 
     //Creating a new socket for the Admin.
     sockfd = new_socket();
@@ -83,8 +83,8 @@ int main(int argc, char const *argv[]) {
     clearArray(admin_info, BUFFER_SIZE);
     read_file_content(admin_info_file, admin_info);
 
-    get_info(admin_info, id, ADMIN_ID);
-    get_info(admin_info, nickname, ADMIN_NICKNAME);
+    get_info(admin_info, id, ADMIN_ID, DELIM);
+    get_info(admin_info, nickname, ADMIN_NICKNAME, DELIM);
 
     //Creates the register message.
     snprintf(buffer, sizeof(buffer), "%s,%s", id, nickname);
@@ -109,7 +109,7 @@ int main(int argc, char const *argv[]) {
 
             case '1':
 
-                list_all_sensors(operation);
+                list_all_sensors(sockfd, operation);
                 break;
 
             case '2':

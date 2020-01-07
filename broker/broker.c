@@ -32,7 +32,7 @@ void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_
 
         if(fds[i]->type == FD_S && strcmp(fds[i]->client_info, id) == 0) {
 
-            strcpy(return_buffer, queue_get_tail(fds[i]->last_reads);
+            strcpy(return_buffer, queue_get_tail(fds[i]->last_reads));
             return;
         }
     }
@@ -128,23 +128,6 @@ void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type
 
     *fds_max = max(*fds_max, socket_client);
     fds[socket_client] = new_identifier(type);
-}
-
-struct sockaddr_in set_connection_info(int port) {
-
-    struct sockaddr_in servaddr;
-
-    /*
-        Copying the necessary info from "server" to "servaddr".
-    */
-    //Assign IP and port to the socket.
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = INADDR_ANY;
-    servaddr.sin_port = htons(port);
-
-    printf(">Info set for: %d.\n", port);
-
-    return servaddr;
 }
 
 void bind_connection(int sockfd, struct sockaddr_in address) {
@@ -252,9 +235,9 @@ int main(int argc, char const *argv[]) {
     set_option(socket_clients_server, option);
     set_option(socket_admins_server, option);
 
-    sensors = set_connection_info(atoi(sensor_port));
-    clients = set_connection_info(atoi(client_port));
-    admins = set_connection_info(atoi(admin_port));
+    sensors = set_connection_info(NULL, atoi(sensor_port));
+    clients = set_connection_info(NULL, atoi(client_port));
+    admins = set_connection_info(NULL, atoi(admin_port));
 
     //Binding the socket_servers to the info.
     bind_connection(socket_sensors_server, sensors);

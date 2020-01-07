@@ -38,7 +38,7 @@
 #define ADMIN_SETTINGS "admin.csv"
 
 #define ADMIN_ADDRESS 2
-#define ADMIN_PORT 3
+#define ADMIN_PORT_CLIENT 3
 #define ADMIN_ID 2
 #define ADMIN_NICKNAME 3
 #define ADMIN_DELIM ";\n"
@@ -84,6 +84,6 @@ void read_file_content(char *file_name, char *dest);
 
 void clearArray(char string[], int length);
 
-void get_info(char *src, char *dest, int step);
+void get_info(char *src, char *dest, int step, char *delim);
 
 #endif

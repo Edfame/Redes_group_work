@@ -35,20 +35,26 @@ struct sockaddr_in set_connection_info(char *hostname, int port) {
     struct sockaddr_in servaddr;
     struct hostent *server;
 
-    server = gethostbyname(hostname);
+    if (hostname == NULL) {
 
-    //Checking if the hostname provided was a valid one.
-    if(server == NULL) {
-        fprintf(stderr, "ERROR, no such host.\n");
-        exit(1);
+        servaddr.sin_addr.s_addr = INADDR_ANY;
+
+    } else {
+
+        server = gethostbyname(hostname);
+
+        //Checking if the hostname provided was a valid one.
+        if (server == NULL) {
+            fprintf(stderr, "ERROR, no such host.\n");
+            exit(1);
+        }
+
+        bcopy((char *) server->h_addr, (char *) &servaddr.sin_addr.s_addr, server->h_length);
+
     }
 
-    /*
-        Copying the necessary info from "server" to "servaddr".
-    */
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
-    bcopy((char *) server->h_addr, (char *) &servaddr.sin_addr.s_addr, server->h_length);
 
     return servaddr;
 }
