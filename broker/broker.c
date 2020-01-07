@@ -26,11 +26,77 @@ void disconnected(int sockfd, fd_set *master, identifier *fd) {
 
 }
 
-void read_admin(char *buffer, identifier *fd) {
+void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_buffer) {
+
+    for (int i = 0; i < fds_max; i++) {
+
+        if(fds[i]->type == FD_S && strcmp(fds[i]->client_info, id) == 0) {
+
+            strcpy(return_buffer, queue_get_tail(fds[i]->last_reads);
+            return;
+        }
+    }
+}
+
+char *list_all_sensors(int fds_max, identifier **fds) {
+
+    char to_return[BUFFER_SIZE];
+
+    clearArray(to_return, BUFFER_SIZE);
+
+    for (int i = 0; i < fds_max; i++) {
+
+        if(fds[i]->type == FD_S) {
+
+            snprintf(to_return, sizeof(to_return), "%s;%s;", fds[i]->client_info, to_return);
+        }
+    }
+
+    return to_return;
+}
+
+void read_admin(int sockfd, char *buffer, int fds_max, identifier **fds) {
 
     /*TODO
      * according to the message received on buffer, decide which make.
      */
+
+    short operation_index = 0,
+          id_index = 1;
+
+    char id[INFO_SIZE],
+         return_buffer[INFO_SIZE],
+         operation = buffer[operation_index];
+
+    switch (operation) {
+
+        case '0':
+
+            get_info(buffer, id, id_index, DELIM);
+            get_sensor_last_read(id, fds_max, fds, return_buffer);
+
+            send(sockfd, return_buffer, sizeof(return_buffer), 0);
+            break;
+
+        case '1':
+
+            strcpy(return_buffer, list_all_sensors(fds_max, fds));
+
+            send(sockfd, return_buffer, sizeof(return_buffer), 0);
+            break;
+
+        case '2':
+
+            break;
+
+        case '3':
+            break;
+        case '4':
+            break;
+
+        default:
+            break;
+    }
 }
 /*
  * read_sensor - if the connection was not closed  by the client, reads the info sent.
@@ -163,9 +229,9 @@ int main(int argc, char const *argv[]) {
     clearArray(broker_settings, BUFFER_SIZE);
     read_file_content(BROKER_SETTINGS, broker_settings);
 
-    get_info(broker_settings, sensor_port, SENSOR_PORT);
-    get_info(broker_settings, client_port, CLIENT_PORT);
-    get_info(broker_settings, admin_port, ADMIN_PORT);
+    get_info(broker_settings, sensor_port, SENSOR_PORT, DELIM);
+    get_info(broker_settings, client_port, CLIENT_PORT, DELIM);
+    get_info(broker_settings, admin_port, ADMIN_PORT, DELIM);
 
     option = 1;
     fds_max = 0;
@@ -286,7 +352,7 @@ int main(int argc, char const *argv[]) {
 
                             case FD_S:
 
-                                read_sensor(i, buffer, &master, fd);
+                                read_sensor(buffer, fd);
                                 break;
 
                             case FD_C:
@@ -296,6 +362,7 @@ int main(int argc, char const *argv[]) {
 
                             case FD_A:
 
+                                read_admin(i, buffer, fds_max, fds);
                                 printf("admin msg.\n");
                                 break;
 

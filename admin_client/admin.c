@@ -1,5 +1,42 @@
 #include "../system_config.h"
 
+void print_operations() {
+
+    printf("0 - Get X's last read.\n1 - List all the sensors registered on the system.\n2 - Send firmware update file to Y type sensors.\n3 - Deactivate sensor with ID X.\n");
+}
+
+void list_all_sensors(int sockfd, char operation) {
+
+    char buffer[BUFFER_SIZE],
+         to_print[BUFFER_SIZE];
+
+    clearArray(buffer, BUFFER_SIZE);
+    snprintf(buffer, sizeof(buffer), "%c", operation);
+
+    send(sockfd, buffer, sizeof(buffer), 0);
+
+    read(sockfd, buffer, sizeof(buffer), 0);
+
+    for (int i = 0; i < strlen(buffer); ++i) {
+        get_info(buffer, to_print, i, ADMIN_DELIM);
+        printf("\t%s\n", to_print);
+    }
+}
+
+void get_last_read(int sockfd, char op, char *buffer) {
+
+    printf("%s's last read: ", buffer);
+
+    snprintf(buffer, sizeof(buffer), "%c,%s", op, buffer);
+
+    //Sending: "operation,ID".
+    send(sockfd, buffer, sizeof(buffer), 0);
+
+    //Receiving: "read_value".
+    recv(sockfd, buffer, sizeof(buffer), 0);
+
+    printf("%s\n", buffer);
+}
 
 int main(int argc, char const *argv[]) {
 
@@ -7,7 +44,8 @@ int main(int argc, char const *argv[]) {
 
     struct sockaddr_in servaddr;
 
-    char admin_settings[BUFFER_SIZE],
+    char operation,
+         admin_settings[BUFFER_SIZE],
          address[INFO_SIZE],
          port[INFO_SIZE],
          admin_info_file[INFO_SIZE],
@@ -57,6 +95,40 @@ int main(int argc, char const *argv[]) {
     /*TODO
      * Get from the std input which action the Admin wants to preform.
      */
+    print_operations();
 
+    while (scanf("%c", &operation) != EOF) {
+
+        switch (operation) {
+
+            case '0':
+
+                scanf(" %s", buffer);
+                get_last_read(sockfd, operation, buffer);
+                break;
+
+            case '1':
+
+                list_all_sensors(operation);
+                break;
+
+            case '2':
+
+                break;
+
+            case '3':
+                break;
+            case '4':
+                break;
+
+            default:
+
+                printf("> Invalid Operation.\n");
+                print_operations();
+                break;
+        }
+    }
+
+    close(sockfd);
     return 0;
 }

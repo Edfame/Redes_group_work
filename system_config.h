@@ -41,6 +41,7 @@
 #define ADMIN_PORT 3
 #define ADMIN_ID 2
 #define ADMIN_NICKNAME 3
+#define ADMIN_DELIM ";\n"
 /*
  * GENERAL
  */
@@ -48,6 +49,7 @@
 #define BUFFER_SIZE 256
 #define INFO_SIZE 16
 #define DATE_SIZE 12
+#define DELIM ",\n"
 
 typedef enum fd_type {
 

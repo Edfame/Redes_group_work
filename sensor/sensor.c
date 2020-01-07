@@ -34,9 +34,9 @@ int main(int argc, char const *argv[]) {
     read_file_content(SENSOR_SETTINGS, settings);
 
     //Sorting the info.
-    get_info(settings, address, ADDRESS);
-    get_info(settings, port, PORT);
-    get_info(settings, read_interval, READ_INTERVAL);
+    get_info(settings, address, ADDRESS, DELIM);
+    get_info(settings, port, PORT, DELIM);
+    get_info(settings, read_interval, READ_INTERVAL, DELIM);
 
     //Creating a new socket for the sensor.
     sockfd = new_socket();
@@ -51,10 +51,10 @@ int main(int argc, char const *argv[]) {
     clearArray(sensor_info, BUFFER_SIZE);
     read_file_content(sensor_info_file, sensor_info);
 
-    get_info(sensor_info, id, ID);
-    get_info(sensor_info, type, TYPE);
-    get_info(sensor_info, local, LOCAL);
-    get_info(sensor_info, firmware_version, FIRMWARE_VERSION);
+    get_info(sensor_info, id, ID, DELIM);
+    get_info(sensor_info, type, TYPE, DELIM);
+    get_info(sensor_info, local, LOCAL, DELIM);
+    get_info(sensor_info, firmware_version, FIRMWARE_VERSION, DELIM);
 
     //Creates the register message.
     snprintf(buffer, sizeof(buffer), "%s,%s,%s,%s", id, type, local, firmware_version);

@@ -105,7 +105,7 @@ void clearArray(char string[], int length) {
     }
 }
 
-void get_info(char *src, char *dest, int step)
+void get_info(char *src, char *dest, int step, char *delim)
 {
 
     char src_cpy[BUFFER_SIZE],
@@ -113,13 +113,13 @@ void get_info(char *src, char *dest, int step)
 
     clearArray(src_cpy, BUFFER_SIZE);
     strcpy(src_cpy, src);
-    token = strtok(src_cpy, ",\n");
+    token = strtok(src_cpy, delim);
 
     int counter = 0;
 
     while(counter<step)
     {
-        token = strtok(NULL, ",\n");
+        token = strtok(NULL, delim);
         counter++;
     }
 
