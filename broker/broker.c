@@ -1,7 +1,5 @@
 #include "../system_config.h"
 
-#define BROKER_SETTINGS "broker.csv"
-
 #define SENSOR_PORT 3
 #define CLIENT_PORT 4
 #define ADMIN_PORT 5
@@ -257,15 +255,23 @@ int main(int argc, char const *argv[]) {
         option,
         fds_max;
 
-    char broker_settings[BUFFER_SIZE],
+    char broker_settings_file[INFO_SIZE],
+         broker_settings[BUFFER_SIZE],
          sensor_port[INFO_SIZE],
          client_port[INFO_SIZE],
          admin_port[INFO_SIZE],
          buffer[BUFFER_SIZE],
          return_buffer[BUFFER_SIZE];
 
+    if (argc < 2) {
+        printf("\nUSAGE ERROR.\nUsage: ./broker BROKER_SETTINGS.csv\n\n");
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(broker_settings_file, (char*) argv[1]);
+
     clear_array(broker_settings, BUFFER_SIZE);
-    read_file_content(BROKER_SETTINGS, broker_settings);
+    read_file_content(broker_settings_file, broker_settings);
 
     get_info(broker_settings, sensor_port, SENSOR_PORT, DELIM);
     get_info(broker_settings, client_port, CLIENT_PORT, DELIM);
@@ -389,7 +395,6 @@ int main(int argc, char const *argv[]) {
                             case FD_A:
 
                                 read_admin(buffer, return_buffer, fds_max, fd, fds);
-                                printf("enviar: %s\n", return_buffer);
                                 break;
 
                             default:

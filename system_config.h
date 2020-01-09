@@ -19,8 +19,6 @@
  * SENSOR
  */
 
-#define SENSOR_SETTINGS "sensor.csv"
-
 #define ADDRESS 3
 #define PORT 4
 #define READ_INTERVAL 5
@@ -34,8 +32,6 @@
 /*
  * ADMIN
  */
-
-#define ADMIN_SETTINGS "admin.csv"
 
 #define ADMIN_ADDRESS 2
 #define ADMIN_PORT_CLIENT 3

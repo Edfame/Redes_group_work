@@ -13,6 +13,7 @@ int main(int argc, char const *argv[]) {
         address[INFO_SIZE],
         port[INFO_SIZE],
         read_interval[INFO_SIZE],
+        sensor_settings_file[INFO_SIZE],
         sensor_info_file[INFO_SIZE],
         sensor_info[BUFFER_SIZE],
         id[INFO_SIZE],
@@ -23,15 +24,16 @@ int main(int argc, char const *argv[]) {
         buffer[BUFFER_SIZE];
 
     //Get sensor info file path passed in argv[1].
-    if (argc < 2) {
-        printf("\nUSAGE ERROR.\nUsage: ./sensor SENSOR_SETTINGS.csv\n\n");
+    if (argc < 3) {
+        printf("\nUSAGE ERROR.\nUsage: ./sensor SENSOR_SETTINGS.csv SENSOR_ID.csv\n\n");
         exit(EXIT_FAILURE);
     }
-    strcpy(sensor_info_file, (char*) argv[1]);
+    strcpy(sensor_settings_file, (char*) argv[1]);
+    strcpy(sensor_info_file, (char*) argv[2]);
 
     //Get connection info from a file.
     clear_array(settings, BUFFER_SIZE);
-    read_file_content(SENSOR_SETTINGS, settings);
+    read_file_content(sensor_settings_file, settings);
 
     //Sorting the info.
     get_info(settings, address, ADDRESS, DELIM);

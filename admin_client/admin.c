@@ -43,6 +43,7 @@ int main(int argc, char const *argv[]) {
          admin_settings[BUFFER_SIZE],
          address[INFO_SIZE],
          port[INFO_SIZE],
+         admin_settings_file[INFO_SIZE],
          admin_info_file[INFO_SIZE],
          admin_info[BUFFER_SIZE],
          id[INFO_SIZE],
@@ -51,16 +52,17 @@ int main(int argc, char const *argv[]) {
          sensor_id[INFO_SIZE];
 
     //Get Admin info file path passed in argv[1].
-    if (argc < 2) {
-        printf("\nUSAGE ERROR.\nUsage: ./admin ADMIN_SETTINGS.csv\n\n");
+    if (argc < 3) {
+        printf("\nUSAGE ERROR.\nUsage: ./admin ADMIN_SETTINGS.csv ADMIN_ID.csv\n\n");
         exit(EXIT_FAILURE);
     }
 
-    strcpy(admin_info_file, (char*) argv[1]);
+    strcpy(admin_settings_file, (char*) argv[1]);
+    strcpy(admin_info_file, (char*) argv[2]);
 
     //Reads connection settings to the array.
     clear_array(admin_settings, BUFFER_SIZE);
-    read_file_content(ADMIN_SETTINGS, admin_settings);
+    read_file_content(admin_settings_file, admin_settings);
 
     //Sorting the info.
     get_info(admin_settings, address, ADMIN_ADDRESS, DELIM);
