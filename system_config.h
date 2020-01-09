@@ -42,6 +42,7 @@
 #define ADMIN_ID 2
 #define ADMIN_NICKNAME 3
 #define ADMIN_DELIM ";\n"
+#define ADMIN_SENSOR_NOT_FOUND "Sensor not found."
 /*
  * GENERAL
  */
@@ -50,6 +51,10 @@
 #define INFO_SIZE 16
 #define DATE_SIZE 12
 #define DELIM ",\n"
+
+int max(int first_number, int second_number);
+
+int max3(int first_number, int second_number, int third_number);
 
 typedef enum fd_type {
 
@@ -82,7 +87,7 @@ void create_connection(int sockfd, struct sockaddr_in servaddr);
 
 void read_file_content(char *file_name, char *dest);
 
-void clearArray(char string[], int length);
+void clear_array(char string[], int length);
 
 void get_info(char *src, char *dest, int step, char *delim);
 

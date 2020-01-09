@@ -1,5 +1,15 @@
 #include "system_config.h"
 
+int max(int first_number, int second_number) {
+
+    return (first_number > second_number ? first_number : second_number);
+}
+
+int max3(int first_number, int second_number, int third_number) {
+
+    return max(first_number, max(second_number, third_number));
+}
+
 identifier *new_identifier(fd_type fd_type) {
 
     identifier *new_identifier = malloc(sizeof(struct identifier));
@@ -102,7 +112,7 @@ void read_file_content(char *file_name, char *dest) {
     fclose(file);
 }
 
-void clearArray(char string[], int length) {
+void clear_array(char string[], int length) {
     int i = 0;
     while(i < length)
     {
@@ -117,7 +127,7 @@ void get_info(char *src, char *dest, int step, char *delim)
     char src_cpy[BUFFER_SIZE],
         *token;
 
-    clearArray(src_cpy, BUFFER_SIZE);
+    clear_array(src_cpy, BUFFER_SIZE);
     strcpy(src_cpy, src);
     token = strtok(src_cpy, delim);
 

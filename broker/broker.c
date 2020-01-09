@@ -9,14 +9,20 @@
 #define MAX_CLIENTS 200
 #define INFO_SIZE 16
 
+/*
+ * new_register - if there is new client connected, registers it with its info.
+ */
 void new_register(identifier *fd, char *info) {
 
     fd->client_info = malloc(sizeof(info));
     strcpy(fd->client_info, info);
-    printf("new client: %s", fd->client_info);
+    printf(">NEW: %s\n", fd->client_info);
 
 }
 
+/*
+ * disconnected - if a socket was closed.
+ */
 void disconnected(int sockfd, fd_set *master, identifier *fd) {
 
     printf("Socket %d disconnected.\n", sockfd);
@@ -26,82 +32,138 @@ void disconnected(int sockfd, fd_set *master, identifier *fd) {
 
 }
 
+/*
+ * disconnect - set a socket to be disconnected.
+ */
+void disconnect(char *id, int fds_max, identifier **fds, char *return_buffer) {
+
+    char temp_id[INFO_SIZE];
+    clear_array(temp_id, INFO_SIZE);
+
+    for (int i = 3; i <= fds_max; i++) {
+
+        if((fds[i]->type == FD_S) && (fds[i]->client_info != NULL)) {
+
+            get_info(fds[i]->client_info, temp_id, 0, DELIM);
+
+            if(strcmp(id, temp_id) == 0) {
+
+                fds[i]->type = NONE;
+
+                snprintf(return_buffer, BUFFER_SIZE, "Set to disconnect sensor %s at socket %d", temp_id, i);
+                return;
+            }
+        }
+    }
+    strcpy(return_buffer, ADMIN_SENSOR_NOT_FOUND);
+}
+
+/*
+ * get_sensor_last_read - gets the last last read from the sensor whose ID is id.
+ */
 void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_buffer) {
 
-    for (int i = 0; i < fds_max; i++) {
+    char temp_id[strlen(id)];
+    clear_array(temp_id, strlen(id));
 
-        if(fds[i]->type == FD_S && strcmp(fds[i]->client_info, id) == 0) {
+    for (int i = 3; i <= fds_max; i++) {
 
-            strcpy(return_buffer, queue_get_tail(fds[i]->last_reads));
-            return;
+        if((fds[i]->client_info != NULL) && (fds[i]->type == FD_S)) {
+
+            get_info(fds[i]->client_info, temp_id, 0, DELIM);
+
+            if(strcmp(id, temp_id) == 0) {
+
+                strcpy(return_buffer, queue_get_tail(fds[i]->last_reads));
+                return;
+            }
         }
     }
+    strcpy(return_buffer, ADMIN_SENSOR_NOT_FOUND);
 }
 
-void list_all_sensors(int fds_max, identifier **fds, char *to_return) {
+/*
+ * list_all_sensors - returns a list of all the sensors in the system.
+ */
+void list_all_sensors(int fds_max, identifier **fds, char *return_buffer) {
 
-    clearArray(to_return, BUFFER_SIZE);
+    char temp_return_buffer[BUFFER_SIZE];
+    clear_array(temp_return_buffer, BUFFER_SIZE);
 
-    for (int i = 0; i < fds_max; i++) {
+    short sensors_counter = 0;
 
-        if(fds[i]->type == FD_S) {
+    for (int i = 3; i <= fds_max; i++) {
 
-            strcat(to_return, fds[i]->client_info);
-            strcat(to_return, ADMIN_DELIM);
+        if((fds[i]->type == FD_S) && (fds[i]->client_info != NULL)) {
+
+            sensors_counter++;
+
+            strcat(temp_return_buffer, fds[i]->client_info);
+            strcat(temp_return_buffer, ADMIN_DELIM);
 
         }
     }
+
+    snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(sensors_counter), "%d;%s", sensors_counter, temp_return_buffer);
 }
 
-void read_admin(char *buffer, char *return_buffer, int fds_max, identifier **fds) {
+/*
+ * read_admin - reads a message sent by an admin and decides what to do accordingly.
+ */
+void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, identifier **fds) {
 
-    /*TODO
-     * according to the message received on buffer, decide which make.
-     */
+    if (fd->client_info == NULL) {
 
-    short operation_index = 0,
-          id_index = 1;
+        new_register(fd, buffer);
 
-    char id[INFO_SIZE],
-         operation = buffer[operation_index];
+    } else {
 
-    clearArray(id, INFO_SIZE);
+        short operation_index = 0,
+              id_index = 1;
 
-    switch (operation) {
+        char id[INFO_SIZE],
+             operation = buffer[operation_index];
 
-        case '0':
+        clear_array(id, INFO_SIZE);
 
-            get_info(buffer, id, id_index, DELIM);
-            get_sensor_last_read(id, fds_max, fds, return_buffer);
-            break;
+        switch (operation) {
 
-        case '1':
+            case '0':
 
-            list_all_sensors(fds_max, fds, return_buffer);
-            break;
+                get_info(buffer, id, id_index, DELIM);
+                get_sensor_last_read(id, fds_max, fds, return_buffer);
+                break;
 
-        case '2':
+            case '1':
 
-            break;
+                list_all_sensors(fds_max, fds, return_buffer);
+                break;
 
-        case '3':
-            break;
+            case '2':
 
-        default:
-            break;
+                break;
+
+            case '3':
+
+                get_info(buffer, id, id_index, DELIM);
+                disconnect(id, fds_max, fds, return_buffer);
+                break;
+
+            default:
+                break;
+        }
     }
 }
 /*
  * read_sensor - if the connection was not closed  by the client, reads the info sent.
  *               registers it or adds more info.
  */
-void read_sensor(int sockfd, char *buffer, identifier *fd) {
+void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
-    if (fd->last_reads == NULL) {
+    if (fd->client_info == NULL) {
 
         new_register(fd, buffer);
         fd->last_reads = new_queue();
-        printf("%d\n", fd->last_reads->size);
 
     } else {
 
@@ -113,18 +175,7 @@ void read_sensor(int sockfd, char *buffer, identifier *fd) {
     }
 
     char *received = "RECEIVED.";
-
-    send(sockfd, received, sizeof(received), 0);
-}
-
-int max(int first_number, int second_number) {
-
-    return (first_number > second_number ? first_number : second_number);
-}
-
-int max3(int first_number, int second_number, int third_number) {
-
-    return max(first_number, max(second_number, third_number));
+    strcpy(return_buffer, received);
 }
 
 void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type) {
@@ -213,7 +264,7 @@ int main(int argc, char const *argv[]) {
          buffer[BUFFER_SIZE],
          return_buffer[BUFFER_SIZE];
 
-    clearArray(broker_settings, BUFFER_SIZE);
+    clear_array(broker_settings, BUFFER_SIZE);
     read_file_content(BROKER_SETTINGS, broker_settings);
 
     get_info(broker_settings, sensor_port, SENSOR_PORT, DELIM);
@@ -284,62 +335,50 @@ int main(int argc, char const *argv[]) {
 
             if(FD_ISSET(i, &read_fds)) {
 
-                /*
-                    Handeling new sensors connecting.
-                */
                 if(i == socket_sensors_server){
 
                     socket_sensors_client = accept_connection(socket_sensors_server, sensors);
 
                     FD_SET(socket_sensors_client, &master);
-                    printf("New sensor registred.\n");
+                    printf("New sensor registered.\n");
 
                     fds_realloc(&fds_max, socket_sensors_client, fds, FD_S);
 
-                /*
-                    Handeling new clients connecting
-                */
                 } else if(i == socket_clients_server) {
 
                     socket_clients_client = accept_connection(socket_clients_server, clients);
 
-                    //socket_clients_client = accept_connection(socket_clients_server, clients);
-
                     FD_SET(socket_clients_client, &master);
-                    printf("New client registred.\n");
+                    printf("New client registered.\n");
 
                     fds_realloc(&fds_max, socket_clients_client, fds, FD_C);
 
-                /*
-                    Handeling new admins connecting
-                */
                 } else if(i == socket_admins_server) {
 
                     socket_admins_client = accept_connection(socket_admins_server, admins);
 
                     FD_SET(socket_admins_client, &master);
-                    printf("New admin registred.\n");
+                    printf("New admin registered.\n");
 
                     fds_realloc(&fds_max, socket_admins_client, fds, FD_A);
 
-                /*
-                    Handeling data from any type of clients.
-                */
                 } else {
 
                     fd = fds[i];
 
-                    if(recv(i, buffer, sizeof(buffer), 0) <= 0) {
+                    if((fd->type == NONE) || (recv(i, buffer, sizeof(buffer), 0) <= 0)) {
 
                         disconnected(i, &master, fd);
 
                     } else {
 
+                        clear_array(return_buffer, sizeof(return_buffer));
+
                         switch(fd->type) {
 
                             case FD_S:
 
-                                read_sensor(i, buffer, fd);
+                                read_sensor(buffer, return_buffer, fd);
                                 break;
 
                             case FD_C:
@@ -349,8 +388,8 @@ int main(int argc, char const *argv[]) {
 
                             case FD_A:
 
-                                read_admin(buffer, return_buffer, fds_max, fds);
-                                printf("admin msg.\n");
+                                read_admin(buffer, return_buffer, fds_max, fd, fds);
+                                printf("enviar: %s\n", return_buffer);
                                 break;
 
                             default:

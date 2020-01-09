@@ -30,7 +30,7 @@ int main(int argc, char const *argv[]) {
     strcpy(sensor_info_file, (char*) argv[1]);
 
     //Get connection info from a file.
-    clearArray(settings, BUFFER_SIZE);
+    clear_array(settings, BUFFER_SIZE);
     read_file_content(SENSOR_SETTINGS, settings);
 
     //Sorting the info.
@@ -48,7 +48,7 @@ int main(int argc, char const *argv[]) {
     create_connection(sockfd, servaddr);
 
     //Get sensor info from file.
-    clearArray(sensor_info, BUFFER_SIZE);
+    clear_array(sensor_info, BUFFER_SIZE);
     read_file_content(sensor_info_file, sensor_info);
 
     get_info(sensor_info, id, ID, DELIM);
@@ -83,8 +83,9 @@ int main(int argc, char const *argv[]) {
 
         printf("READ SENT: %s\n", buffer);
 
+        bzero(buffer, sizeof(buffer));
         //Firmware updated received.
-        if(recv(sockfd, buffer, sizeof(buffer), 0) >= 0) {
+        if(recv(sockfd, buffer, sizeof(buffer), 0) > 0) {
             //TODO Handle update.
             printf("UPDATE: %s\n", buffer);
         }
