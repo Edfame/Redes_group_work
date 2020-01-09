@@ -1,12 +1,5 @@
 #include "../system_config.h"
 
-#define SENSOR_PORT 3
-#define CLIENT_PORT 4
-#define ADMIN_PORT 5
-
-#define MAX_CLIENTS 200
-#define INFO_SIZE 16
-
 /*
  * new_register - if there is new client connected, registers it with its info.
  */
@@ -33,7 +26,7 @@ void disconnected(int sockfd, fd_set *master, identifier *fd) {
 identifier *find_id(char *id, int fds_max, identifier **fds) {
 
     char temp_id[INFO_SIZE];
-    clear_array(temp_id, INFO_SIZE);
+    bzero(temp_id, INFO_SIZE);
 
     for (int i = 3; i <= fds_max; i++) {
 
@@ -90,7 +83,7 @@ void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_
 void list_all_sensors(int fds_max, identifier **fds, char *return_buffer) {
 
     char temp_return_buffer[BUFFER_SIZE];
-    clear_array(temp_return_buffer, BUFFER_SIZE);
+    bzero(temp_return_buffer, BUFFER_SIZE);
 
     short sensors_counter = 0;
 
@@ -109,6 +102,82 @@ void list_all_sensors(int fds_max, identifier **fds, char *return_buffer) {
     snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(sensors_counter), "%d;%s", sensors_counter, temp_return_buffer);
 }
 
+void list_all_locals(char *type, int fds_max, identifier **fds, char *return_buffer) {
+
+    char temp_return_buffer[BUFFER_SIZE],
+         temp_local[INFO_SIZE],
+         temp_type[INFO_SIZE];
+
+    bzero(temp_return_buffer, BUFFER_SIZE);
+    bzero(temp_local, INFO_SIZE);
+    bzero(temp_type, INFO_SIZE);
+
+    short locals_counter = 0;
+
+    for (int i = 3; i <= fds_max; i++) {
+
+        if((fds[i]->type == FD_S) && (fds[i]->client_info != NULL)) {
+
+            get_info(fds[i]->client_info, temp_type, CLIENT_SENSOR_TYPE, DELIM);
+
+            if (strcmp(temp_type, type) == 0) {
+
+                get_info(fds[i]->client_info, temp_local, CLIENT_SENSOR_LOCAL, DELIM);
+
+                if(strstr(temp_return_buffer, temp_local) == NULL) {
+
+                    locals_counter++;
+
+                    strcat(temp_return_buffer, temp_local);
+                    strcat(temp_return_buffer, CLIENT_DELIM);
+                }
+            }
+        }
+    }
+
+    snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(locals_counter), "%d;%s", locals_counter, temp_return_buffer);
+}
+
+/*
+ * read_client - reads a message sent by a client and decides what to do accordingly.
+ */
+void read_client(char *buffer, char *return_buffer, int fds_max, identifier *fd, identifier **fds) {
+
+    if (fd->client_info == NULL) {
+
+        new_register(fd, buffer);
+
+    } else {
+
+        short operation_index = 0,
+              info_index = 1;
+
+        char info[INFO_SIZE],
+             operation = buffer[operation_index];
+
+        bzero(info, INFO_SIZE);
+
+        switch (operation) {
+
+            case '0':
+
+                get_info(buffer, info, info_index, DELIM);
+                list_all_locals(info, fds_max, fds, return_buffer);
+                break;
+
+            case '1':
+
+                break;
+
+            case '2':
+
+                break;
+
+            default:
+                break;
+        }
+    }
+}
 /*
  * read_admin - reads a message sent by an admin and decides what to do accordingly.
  */
@@ -126,7 +195,7 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
         char id[INFO_SIZE],
              operation = buffer[operation_index];
 
-        clear_array(id, INFO_SIZE);
+        bzero(id, INFO_SIZE);
 
         switch (operation) {
 
@@ -274,12 +343,12 @@ int main(int argc, char const *argv[]) {
 
     strcpy(broker_settings_file, (char*) argv[1]);
 
-    clear_array(broker_settings, BUFFER_SIZE);
+    bzero(broker_settings, BUFFER_SIZE);
     read_file_content(broker_settings_file, broker_settings);
 
-    get_info(broker_settings, sensor_port, SENSOR_PORT, DELIM);
-    get_info(broker_settings, client_port, CLIENT_PORT, DELIM);
-    get_info(broker_settings, admin_port, ADMIN_PORT, DELIM);
+    get_info(broker_settings, sensor_port, BROKER_SENSOR_PORT, DELIM);
+    get_info(broker_settings, client_port, BROKER_CLIENT_PORT, DELIM);
+    get_info(broker_settings, admin_port, BROKER_ADMIN_PORT, DELIM);
 
     option = 1;
     fds_max = 0;
@@ -382,7 +451,7 @@ int main(int argc, char const *argv[]) {
 
                     } else {
 
-                        clear_array(return_buffer, sizeof(return_buffer));
+                        bzero(return_buffer, sizeof(return_buffer));
 
                         switch(fd->type) {
 
@@ -393,7 +462,7 @@ int main(int argc, char const *argv[]) {
 
                             case FD_C:
 
-                                printf("client msg.\n");
+                                read_client(buffer, return_buffer, fds_max, fd, fds);
                                 break;
 
                             case FD_A:

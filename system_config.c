@@ -112,22 +112,13 @@ void read_file_content(char *file_name, char *dest) {
     fclose(file);
 }
 
-void clear_array(char string[], int length) {
-    int i = 0;
-    while(i < length)
-    {
-        string[i]='\0';
-        i++;
-    }
-}
-
 void get_info(char *src, char *dest, int step, char *delim)
 {
 
     char src_cpy[BUFFER_SIZE],
         *token;
 
-    clear_array(src_cpy, BUFFER_SIZE);
+    bzero(src_cpy, BUFFER_SIZE);
     strcpy(src_cpy, src);
     token = strtok(src_cpy, delim);
 

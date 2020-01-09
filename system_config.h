@@ -16,33 +16,50 @@
 #include "queue/queue.h"
 
 /*
+ * BROKER
+ */
+#define BROKER_SENSOR_PORT 3
+#define BROKER_CLIENT_PORT 4
+#define BROKER_ADMIN_PORT 5
+#define MAX_CLIENTS 200
+
+/*
  * SENSOR
  */
-
-#define ADDRESS 3
-#define PORT 4
-#define READ_INTERVAL 5
-#define ID 4
-#define TYPE 5
-#define LOCAL 6
-#define FIRMWARE_VERSION 7
-#define UNIT "µg/m³"
-#define READ_AMOUNTS 10
+#define SENSOR_ADDRESS 3
+#define SENSOR_PORT 4
+#define SENSOR_READ_INTERVAL 5
+#define SENSOR_ID 4
+#define SENSOR_TYPE 5
+#define SENSOR_LOCAL 6
+#define SENSOR_FIRMWARE_VERSION 7
+#define SENSOR_UNIT "µg/m³"
 
 /*
  * ADMIN
  */
-
 #define ADMIN_ADDRESS 2
 #define ADMIN_PORT_CLIENT 3
 #define ADMIN_ID 2
 #define ADMIN_NICKNAME 3
 #define ADMIN_DELIM ";\n"
 #define ADMIN_SENSOR_NOT_FOUND "Sensor not found."
+
+/*
+ * CLIENT
+ */
+#define CLIENT_ADDRESS 2
+#define CLIENT_PORT_CLIENT 3
+#define CLIENT_ID 2
+#define CLIENT_NICKNAME 3
+#define CLIENT_LOCAL_NOT_FOUND "Local not found."
+#define CLIENT_SENSOR_TYPE 1
+#define CLIENT_SENSOR_LOCAL 2
+#define CLIENT_DELIM ";\n"
+
 /*
  * GENERAL
  */
-
 #define BUFFER_SIZE 256
 #define INFO_SIZE 16
 #define DATE_SIZE 12
@@ -82,8 +99,6 @@ struct sockaddr_in set_connection_info(char *hostname, int port);
 void create_connection(int sockfd, struct sockaddr_in servaddr);
 
 void read_file_content(char *file_name, char *dest);
-
-void clear_array(char string[], int length);
 
 void get_info(char *src, char *dest, int step, char *delim);
 

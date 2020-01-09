@@ -32,13 +32,13 @@ int main(int argc, char const *argv[]) {
     strcpy(sensor_info_file, (char*) argv[2]);
 
     //Get connection info from a file.
-    clear_array(settings, BUFFER_SIZE);
+    bzero(settings, BUFFER_SIZE);
     read_file_content(sensor_settings_file, settings);
 
     //Sorting the info.
-    get_info(settings, address, ADDRESS, DELIM);
-    get_info(settings, port, PORT, DELIM);
-    get_info(settings, read_interval, READ_INTERVAL, DELIM);
+    get_info(settings, address, SENSOR_ADDRESS, DELIM);
+    get_info(settings, port, SENSOR_PORT, DELIM);
+    get_info(settings, read_interval, SENSOR_READ_INTERVAL, DELIM);
 
     //Creating a new socket for the sensor.
     sockfd = new_socket();
@@ -50,13 +50,13 @@ int main(int argc, char const *argv[]) {
     create_connection(sockfd, servaddr);
 
     //Get sensor info from file.
-    clear_array(sensor_info, BUFFER_SIZE);
+    bzero(sensor_info, BUFFER_SIZE);
     read_file_content(sensor_info_file, sensor_info);
 
-    get_info(sensor_info, id, ID, DELIM);
-    get_info(sensor_info, type, TYPE, DELIM);
-    get_info(sensor_info, local, LOCAL, DELIM);
-    get_info(sensor_info, firmware_version, FIRMWARE_VERSION, DELIM);
+    get_info(sensor_info, id, SENSOR_ID, DELIM);
+    get_info(sensor_info, type, SENSOR_TYPE, DELIM);
+    get_info(sensor_info, local, SENSOR_LOCAL, DELIM);
+    get_info(sensor_info, firmware_version, SENSOR_FIRMWARE_VERSION, DELIM);
 
     //Creates the register message.
     snprintf(buffer, sizeof(buffer), "%s,%s,%s,%s", id, type, local, firmware_version);
@@ -79,7 +79,7 @@ int main(int argc, char const *argv[]) {
         read = rand() % 500;
 
         snprintf(date, sizeof(date), "%d/%d/%d", time_info->tm_mday, time_info->tm_mon + 1, time_info->tm_year + 1900);
-        snprintf(buffer, sizeof(buffer), "%s,%s,%d,%s,%s", id, date, read, UNIT, firmware_version);
+        snprintf(buffer, sizeof(buffer), "%s,%s,%d,%s,%s", id, date, read, SENSOR_UNIT, firmware_version);
 
         send(sockfd, buffer, sizeof(buffer), 0);
 

@@ -12,8 +12,8 @@ void list_all_sensors(char *buffer) {
 
     short sensors_counter = 0;
 
-    clear_array(to_print, sizeof(to_print));
-    clear_array(sensors, sizeof(sensors));
+    bzero(to_print, sizeof(to_print));
+    bzero(sensors, sizeof(sensors));
 
     get_info(buffer, sensors, 0, ADMIN_DELIM);
 
@@ -51,7 +51,7 @@ int main(int argc, char const *argv[]) {
          buffer[BUFFER_SIZE],
          sensor_id[INFO_SIZE];
 
-    //Get Admin info file path passed in argv[1].
+    //Get Admin files.
     if (argc < 3) {
         printf("\nUSAGE ERROR.\nUsage: ./admin ADMIN_SETTINGS.csv ADMIN_ID.csv\n\n");
         exit(EXIT_FAILURE);
@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
     strcpy(admin_info_file, (char*) argv[2]);
 
     //Reads connection settings to the array.
-    clear_array(admin_settings, BUFFER_SIZE);
+    bzero(admin_settings, BUFFER_SIZE);
     read_file_content(admin_settings_file, admin_settings);
 
     //Sorting the info.
@@ -78,7 +78,7 @@ int main(int argc, char const *argv[]) {
     create_connection(sockfd, servaddr);
 
     //Get Admin info from file.
-    clear_array(admin_info, BUFFER_SIZE);
+    bzero(admin_info, BUFFER_SIZE);
     read_file_content(admin_info_file, admin_info);
 
     get_info(admin_info, id, ADMIN_ID, DELIM);
