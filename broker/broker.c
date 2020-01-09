@@ -30,10 +30,7 @@ void disconnected(int sockfd, fd_set *master, identifier *fd) {
 
 }
 
-/*
- * disconnect - set a socket to be disconnected.
- */
-void disconnect(char *id, int fds_max, identifier **fds, char *return_buffer) {
+identifier *find_id(char *id, int fds_max, identifier **fds) {
 
     char temp_id[INFO_SIZE];
     clear_array(temp_id, INFO_SIZE);
@@ -45,15 +42,29 @@ void disconnect(char *id, int fds_max, identifier **fds, char *return_buffer) {
             get_info(fds[i]->client_info, temp_id, 0, DELIM);
 
             if(strcmp(id, temp_id) == 0) {
-
-                fds[i]->type = NONE;
-
-                snprintf(return_buffer, BUFFER_SIZE, "Set to disconnect sensor %s at socket %d", temp_id, i);
-                return;
+                return fds[i];
             }
         }
     }
-    strcpy(return_buffer, ADMIN_SENSOR_NOT_FOUND);
+    return NULL;
+}
+
+/*
+ * disconnect - set a socket to be disconnected.
+ */
+void disconnect(char *id, int fds_max, identifier **fds, char *return_buffer) {
+
+    identifier *fd = find_id(id, fds_max, fds);
+
+    if(fd != NULL) {
+
+        fd->type = NONE;
+        snprintf(return_buffer, BUFFER_SIZE, "Set sensor %s to disconnect.", id);
+
+    } else {
+
+        strcpy(return_buffer, ADMIN_SENSOR_NOT_FOUND);
+    }
 }
 
 /*
@@ -61,23 +72,16 @@ void disconnect(char *id, int fds_max, identifier **fds, char *return_buffer) {
  */
 void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_buffer) {
 
-    char temp_id[strlen(id)];
-    clear_array(temp_id, strlen(id));
+    identifier *fd = find_id(id, fds_max, fds);
 
-    for (int i = 3; i <= fds_max; i++) {
+    if(fd != NULL) {
 
-        if((fds[i]->client_info != NULL) && (fds[i]->type == FD_S)) {
+        strcpy(return_buffer, queue_get_tail(fd->last_reads));
 
-            get_info(fds[i]->client_info, temp_id, 0, DELIM);
+    } else {
 
-            if(strcmp(id, temp_id) == 0) {
-
-                strcpy(return_buffer, queue_get_tail(fds[i]->last_reads));
-                return;
-            }
-        }
+        strcpy(return_buffer, ADMIN_SENSOR_NOT_FOUND);
     }
-    strcpy(return_buffer, ADMIN_SENSOR_NOT_FOUND);
 }
 
 /*
