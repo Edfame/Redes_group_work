@@ -2,31 +2,29 @@
 
 void print_operations() {
 
-    printf("0 - Lists locals where are sensors of type T.\n1 - Get last read from a local; Get a read for a certain date and hour.\n2 - Subscribe to sensor X.\n");
+    printf("0 - Lists locals where are sensors of type T.\n1 - Get last read from a local.\n2 - Get a read for a certain date and hour.\n3 - Subscribe to sensor X.\n");
 
 }
 
-void list_all_locals(char *buffer) {
+void list_all(char *buffer) {
 
     char to_print[BUFFER_SIZE],
-         locals[INFO_SIZE];
+         info[INFO_SIZE];
 
-    short locals_counter = 0;
+    short info_counter = 0;
 
     bzero(to_print, sizeof(to_print));
-    bzero(locals, sizeof(locals));
+    bzero(info, sizeof(info));
 
-    get_info(buffer, locals, OPERATION_INDEX, CLIENT_DELIM);
+    get_info(buffer, info, OPERATION_INDEX, CLIENT_DELIM);
 
-    printf("> Locals:\n");
-
-    if((locals_counter = atoi(locals)) == 0) {
+    if((info_counter = atoi(info)) == 0) {
 
         printf("> \t- %s\n", CLIENT_LOCAL_NOT_FOUND);
         return;
     }
 
-    for (int i = 1; i <= locals_counter; i++) {
+    for (int i = 1; i <= info_counter; i++) {
 
         get_info(buffer, to_print, i, ADMIN_DELIM);
         printf("\t- %s\n", to_print);
@@ -136,6 +134,8 @@ int main(int argc, char const *argv[]) {
 
                         case '2':
 
+                        case '3':
+
                             scanf(" %s", input);
                             snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
                             break;
@@ -160,6 +160,8 @@ int main(int argc, char const *argv[]) {
 
                     if(read(sockfd, buffer, sizeof(buffer)) > 0) {
 
+                        printf("BUFFER: %s\n", buffer);
+
                         operation = buffer[OPERATION_INDEX];
 
                         bzero(info, sizeof(info));
@@ -169,15 +171,20 @@ int main(int argc, char const *argv[]) {
 
                             case '0':
 
-                                list_all_locals(info);
+                                printf("> Locals:\n");
+                                list_all(info);
                                 break;
 
                             case '1':
 
-                                printf("> Last read from local: %s\n", info);
+                                printf("> Last read from local:\n");
+                                list_all(info);
                                 break;
 
                             case '2':
+                                break;
+
+                            case '3':
 
                                 printf("> %s\n", info);
                                 break;

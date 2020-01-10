@@ -154,7 +154,7 @@ void list_all_locals(char *type, int fds_max, identifier **fds, char *return_buf
                     locals_counter++;
 
                     strcat(temp_return_buffer, temp_local);
-                    strcat(temp_return_buffer, CLIENT_DELIM);
+                    strcat(temp_return_buffer, ";");
                 }
             }
         }
@@ -195,6 +195,39 @@ void subscribe_local(int sockfd, char *local, int fds_max, identifier **fds, cha
         strcpy(return_buffer, "Not subscribed.");
     }
 }
+
+/*
+ * get_local_last_read - returns the last read for every sensor in the given local.
+ */
+void get_local_last_read(char *local, int fds_max, identifier **fds, char *return_buffer) {
+
+    char temp_return_buffer[BUFFER_SIZE],
+         temp_local[INFO_SIZE];
+
+    bzero(temp_return_buffer, BUFFER_SIZE);
+    bzero(temp_local, INFO_SIZE);
+
+    short reads_counter = 0;
+
+    for(int i = 3; i <= fds_max; i++){
+
+        if((fds[i]->type == FD_S) && (fds[i]->client_info != NULL)) {
+
+            get_info(fds[i]->client_info, temp_local, CLIENT_SENSOR_LOCAL, DELIM);
+
+            if(strcmp(temp_local, local) == 0) {
+
+                reads_counter++;
+
+                strcat(temp_return_buffer, queue_get_tail(fds[i]->last_reads));
+                strcat(temp_return_buffer, ";");
+            }
+        }
+    }
+
+    snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(reads_counter), "%d;%s", reads_counter, temp_return_buffer);
+}
+
 /*
  * read_client - reads a message sent by a client and decides what to do accordingly.
  */
@@ -223,9 +256,14 @@ void read_client(int sockfd, char *buffer, char *return_buffer, int fds_max, ide
 
             case '1':
 
+                get_info(buffer, info, INFO_INDEX, DELIM);
+                get_local_last_read(info, fds_max, fds, temp_return_buffer);
                 break;
 
             case '2':
+                break;
+
+            case '3':
 
                 get_info(buffer, info, INFO_INDEX, DELIM);
                 subscribe_local(sockfd, info, fds_max, fds, temp_return_buffer);
@@ -309,7 +347,7 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
             if(fd->subscribed_sensors[i] == CLIENT_SUBSCRIBED) {
 
-                snprintf(to_send, sizeof(to_send), "2|%s", buffer);
+                snprintf(to_send, sizeof(to_send), "3|%s", buffer);
                 send(i, to_send, sizeof(to_send), 0);
             }
         }
