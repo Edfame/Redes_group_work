@@ -132,3 +132,61 @@ void get_info(char *src, char *dest, int step, char *delim)
 
     strcpy(dest,token);
 }
+
+void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type) {
+
+    *fds_max = max(*fds_max, socket_client);
+    fds[socket_client] = new_identifier(type);
+}
+
+void bind_connection(int sockfd, struct sockaddr_in address) {
+
+    if(bind(sockfd, (struct sockaddr *) &address, sizeof(address)) < 0) {
+
+        printf(">Socket not bound: %d.\n", address.sin_port);
+        exit(EXIT_FAILURE);
+
+    } else {
+
+        printf(">Socket bound: %d.\n", address.sin_port);
+
+    }
+}
+
+void listen_to(int sockfd) {
+
+    //Setting the server to listen the client.
+    if(listen(sockfd, 3) < 0) {
+
+        printf("Listen failed.\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void set_option(int sockfd, int option) {
+
+    //Make sure that socket doesnt reserve the port.
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option))) {
+
+        perror("setsockopt failed.");
+        exit(EXIT_FAILURE);
+    }
+}
+
+int accept_connection(int sockfd, struct sockaddr_in adress) {
+
+    int socket_return,
+            address_len = sizeof(adress);
+
+
+    socket_return = accept(sockfd, (struct sockaddr *) &adress, (socklen_t *)&address_len);
+
+    if(socket_return < 0) {
+
+        perror("Accept failed.\nAborted.\n");
+        exit(EXIT_FAILURE);
+
+    }
+
+    return socket_return;
+}

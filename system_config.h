@@ -108,4 +108,14 @@ void read_file_content(char *file_name, char *dest);
 
 void get_info(char *src, char *dest, int step, char *delim);
 
+void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type);
+
+void bind_connection(int sockfd, struct sockaddr_in address);
+
+void listen_to(int sockfd);
+
+void set_option(int sockfd, int option);
+
+int accept_connection(int sockfd, struct sockaddr_in adress);
+
 #endif

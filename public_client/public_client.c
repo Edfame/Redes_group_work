@@ -16,7 +16,7 @@ void list_all_locals(char *buffer) {
     bzero(to_print, sizeof(to_print));
     bzero(locals, sizeof(locals));
 
-    get_info(buffer, locals, 0, CLIENT_DELIM);
+    get_info(buffer, locals, OPERATION_INDEX, CLIENT_DELIM);
 
     printf("> Locals:\n");
 

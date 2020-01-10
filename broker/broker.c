@@ -12,9 +12,8 @@ void new_register(identifier *fd, char *info) {
 }
 
 /*
- * disconnected - if a socket was closed.
+ * unsubscribe - give a client, unsubscribes him for every sensor.
  */
-
 void unsubscribe(int client_socket, int fds_max, identifier **fds) {
 
     for (int i = 3; i <= fds_max; i++) {
@@ -26,6 +25,9 @@ void unsubscribe(int client_socket, int fds_max, identifier **fds) {
     }
 }
 
+/*
+ * disconnected - disconnects the socket passed from the broker. If the it was a Client, unsubscribes from sensors.
+ */
 void disconnected(int sockfd, fd_set *master, int fds_max, identifier *fd, identifier **fds) {
 
     if(fd->type == FD_C) {
@@ -40,6 +42,9 @@ void disconnected(int sockfd, fd_set *master, int fds_max, identifier *fd, ident
     printf("Socket %d disconnected.\n", sockfd);
 }
 
+/*
+ * find_id - given an id, searches for a sensor that matches it. Returns if found.
+ */
 identifier *find_id(char *id, int fds_max, identifier **fds) {
 
     char temp_id[INFO_SIZE];
@@ -119,6 +124,9 @@ void list_all_sensors(int fds_max, identifier **fds, char *return_buffer) {
     snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(sensors_counter), "%d;%s", sensors_counter, temp_return_buffer);
 }
 
+/*
+ * list_all_locals - given a sensor type, lists all the locals that have at least on sensor of that type.
+ */
 void list_all_locals(char *type, int fds_max, identifier **fds, char *return_buffer) {
 
     char temp_return_buffer[BUFFER_SIZE],
@@ -155,6 +163,9 @@ void list_all_locals(char *type, int fds_max, identifier **fds, char *return_buf
     snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(locals_counter), "%d;%s", locals_counter, temp_return_buffer);
 }
 
+/*
+ * subscribe_local - given a local, for every sensor in that local, the client will sub to that sensor.
+ */
 void subscribe_local(int sockfd, char *local, int fds_max, identifier **fds, char *return_buffer) {
 
     char temp_local[INFO_SIZE],
@@ -305,64 +316,6 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
     }
 
     strcpy(return_buffer, "RECEIVED.");
-}
-
-void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type) {
-
-    *fds_max = max(*fds_max, socket_client);
-    fds[socket_client] = new_identifier(type);
-}
-
-void bind_connection(int sockfd, struct sockaddr_in address) {
-
-    if(bind(sockfd, (struct sockaddr *) &address, sizeof(address)) < 0) {
-
-        printf(">Socket not bound: %d.\n", address.sin_port);
-        exit(EXIT_FAILURE);
-
-    } else {
-
-        printf(">Socket bound: %d.\n", address.sin_port);
-
-    }
-}
-
-void listen_to(int sockfd) {
-
-    //Setting the server to listen the client.
-    if(listen(sockfd, 3) < 0) {
-
-        printf("Listen failed.\n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void set_option(int sockfd, int option) {
-
-    //Make sure that socket doesnt reserve the port.
-    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &option, sizeof(option))) {
-
-        perror("setsockopt failed.");
-        exit(EXIT_FAILURE);
-    }
-}
-
-int accept_connection(int sockfd, struct sockaddr_in adress) {
-
-    int socket_return,
-        address_len = sizeof(adress);
-
-
-    socket_return = accept(sockfd, (struct sockaddr *) &adress, (socklen_t *)&address_len);
-
-    if(socket_return < 0) {
-
-        perror("Accept failed.\nAborted.\n");
-        exit(EXIT_FAILURE);
-
-    }
-
-    return socket_return;
 }
 
 int main(int argc, char const *argv[]) {
