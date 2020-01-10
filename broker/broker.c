@@ -14,13 +14,30 @@ void new_register(identifier *fd, char *info) {
 /*
  * disconnected - if a socket was closed.
  */
-void disconnected(int sockfd, fd_set *master, identifier *fd) {
 
-    printf("Socket %d disconnected.\n", sockfd);
+void unsubscribe(int client_socket, int fds_max, identifier **fds) {
+
+    for (int i = 3; i <= fds_max; i++) {
+
+        if((fds[i]->type == FD_S) && (fds[i]->subscribed_sensors != NULL)) {
+
+            fds[i]->subscribed_sensors[client_socket] = CLIENT_UNSUBSCRIBED;
+        }
+    }
+}
+
+void disconnected(int sockfd, fd_set *master, int fds_max, identifier *fd, identifier **fds) {
+
+    if(fd->type == FD_C) {
+
+        unsubscribe(sockfd, fds_max, fds);
+    }
+
     close(sockfd);
     FD_CLR(sockfd, master);
     free(fd);
 
+    printf("Socket %d disconnected.\n", sockfd);
 }
 
 identifier *find_id(char *id, int fds_max, identifier **fds) {
@@ -283,8 +300,6 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
                 snprintf(to_send, sizeof(to_send), "2|%s", buffer);
                 send(i, to_send, sizeof(to_send), 0);
-
-                printf("MANDEI %s\n", to_send);
             }
         }
     }
@@ -490,7 +505,7 @@ int main(int argc, char const *argv[]) {
 
                     if((fd->type == NONE) || (recv(i, buffer, sizeof(buffer), 0) <= 0)) {
 
-                        disconnected(i, &master, fd);
+                        disconnected(i, &master, fds_max, fd, fds);
 
                     } else {
 

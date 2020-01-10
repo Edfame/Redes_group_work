@@ -58,6 +58,7 @@
 #define CLIENT_SENSOR_LOCAL 2
 #define CLIENT_DELIM "|\n"
 #define CLIENT_SUBSCRIBED 1
+#define CLIENT_UNSUBSCRIBED 0
 #define CLIENT_SUBSCRIBED_MSG "Subscribed."
 
 /*
