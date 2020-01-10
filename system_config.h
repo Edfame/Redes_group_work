@@ -19,6 +19,7 @@
  * BROKER
  */
 #define BROKER_SENSOR_PORT 3
+#define BROKER_SENSOR_ID 0
 #define BROKER_CLIENT_PORT 4
 #define BROKER_ADMIN_PORT 5
 #define MAX_CLIENTS 200
@@ -55,11 +56,15 @@
 #define CLIENT_LOCAL_NOT_FOUND "Local not found."
 #define CLIENT_SENSOR_TYPE 1
 #define CLIENT_SENSOR_LOCAL 2
-#define CLIENT_DELIM ";\n"
+#define CLIENT_DELIM "|\n"
+#define CLIENT_SUBSCRIBED 1
+#define CLIENT_SUBSCRIBED_MSG "Subscribed."
 
 /*
  * GENERAL
  */
+#define OPERATION_INDEX 0
+#define INFO_INDEX 1
 #define BUFFER_SIZE 256
 #define INFO_SIZE 16
 #define DATE_SIZE 12
@@ -83,7 +88,7 @@ typedef struct identifier{
     fd_type type;
     char *client_info;
     queue *last_reads;
-    int *subscribed_sensors;
+    short *subscribed_sensors;
 
 } identifier;
 

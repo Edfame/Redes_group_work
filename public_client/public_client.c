@@ -28,7 +28,7 @@ void list_all_locals(char *buffer) {
 
     for (int i = 1; i <= locals_counter; i++) {
 
-        get_info(buffer, to_print, i, CLIENT_DELIM);
+        get_info(buffer, to_print, i, ADMIN_DELIM);
         printf("\t- %s\n", to_print);
     }
 }
@@ -36,9 +36,13 @@ void list_all_locals(char *buffer) {
 int main(int argc, char const *argv[]) {
 
     int sockfd,
-        valid_operation = 1;
+        fds_max,
+        valid_operation;
 
     struct sockaddr_in servaddr;
+
+    fd_set master,
+           read_fds;
 
     char operation,
          address[INFO_SIZE],
@@ -50,6 +54,7 @@ int main(int argc, char const *argv[]) {
          id[INFO_SIZE],
          nickname[INFO_SIZE],
          buffer[BUFFER_SIZE],
+         info[BUFFER_SIZE],
          input[INFO_SIZE];
 
     //Get Client files.
@@ -94,59 +99,98 @@ int main(int argc, char const *argv[]) {
     //Receives an empty message.
     recv(sockfd, buffer, sizeof(buffer), 0);
 
+    FD_ZERO(&master);
+
+    FD_SET(sockfd, &master);
+    FD_SET(STDIN_FILENO, &master);
+
+    fds_max = max(sockfd, STDIN_FILENO);
+
     print_operations();
 
-    while (scanf(" %c", &operation) != EOF) {
+    for(;;) {
 
-        valid_operation = 1;
+        read_fds = master;
 
-        switch (operation) {
+        if(select(fds_max + 1, &read_fds, NULL, NULL, NULL) == -1) {
 
-            case '0':
-
-            case '1':
-
-            case '2':
-
-                scanf(" %s", input);
-                snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
-                break;
-
-            default:
-
-                valid_operation = 0;
-
-                printf("> Invalid Operation.\n");
-                print_operations();
-                break;
+            perror("Select failed.\n");
+            exit(EXIT_FAILURE);
         }
 
-        send(sockfd, buffer, sizeof(buffer), 0);
+        for(int i = 0; i <= fds_max; i++) {
 
-        //Receiving: "read_value".
-        if(valid_operation && (read(sockfd, buffer, sizeof(buffer)) > 0)) {
+            if (FD_ISSET(i, &read_fds)) {
 
-            switch (operation) {
+                if(i == STDIN_FILENO) {
 
-                case '0':
+                    valid_operation = 1;
 
-                    list_all_locals(buffer);
-                    break;
+                    scanf(" %c", &operation);
 
-                case '1':
+                    switch (operation) {
 
-                    printf("> Last read from local: %s\n", buffer);
-                    break;
+                        case '0':
 
-                case '2':
+                        case '1':
 
-                    printf("> %s\n", buffer);
-                    break;
+                        case '2':
 
-                default:
-                    break;
+                            scanf(" %s", input);
+                            snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
+                            break;
+
+                        default:
+
+                            valid_operation = 0;
+
+                            printf("> Invalid Operation.\n");
+                            print_operations();
+                            break;
+
+                    }
+
+                    if(valid_operation) {
+
+                        send(sockfd, buffer, sizeof(buffer), 0);
+
+                    }
+
+                } else if(i == sockfd) {
+
+                    if(read(sockfd, buffer, sizeof(buffer)) > 0) {
+
+                        operation = buffer[OPERATION_INDEX];
+
+                        bzero(info, sizeof(info));
+                        get_info(buffer, info, INFO_INDEX, CLIENT_DELIM);
+
+                        switch (operation) {
+
+                            case '0':
+
+                                list_all_locals(info);
+                                break;
+
+                            case '1':
+
+                                printf("> Last read from local: %s\n", info);
+                                break;
+
+                            case '2':
+
+                                printf("> %s\n", info);
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                }
             }
+            bzero(buffer, sizeof(buffer));
         }
+
     }
 
     close(sockfd);

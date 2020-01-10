@@ -138,10 +138,39 @@ void list_all_locals(char *type, int fds_max, identifier **fds, char *return_buf
     snprintf(return_buffer, sizeof(temp_return_buffer) + sizeof(locals_counter), "%d;%s", locals_counter, temp_return_buffer);
 }
 
+void subscribe_local(int sockfd, char *local, int fds_max, identifier **fds, char *return_buffer) {
+
+    char temp_local[INFO_SIZE],
+         sub_flag = 'n';
+    bzero(temp_local, INFO_SIZE);
+
+    for (int i = 3; i <= fds_max ; i++) {
+
+        if((fds[i]->type == FD_S) && (fds[i]->client_info != NULL)) {
+
+            get_info(fds[i]->client_info, temp_local, CLIENT_SENSOR_LOCAL, DELIM);
+
+            if(strcmp(temp_local, local) == 0) {
+
+                fds[i]->subscribed_sensors[sockfd] = CLIENT_SUBSCRIBED;
+                sub_flag = 'y';
+            }
+        }
+    }
+
+    if(sub_flag == 'y') {
+
+        strcpy(return_buffer, CLIENT_SUBSCRIBED_MSG);
+
+    } else {
+
+        strcpy(return_buffer, "Not subscribed.");
+    }
+}
 /*
  * read_client - reads a message sent by a client and decides what to do accordingly.
  */
-void read_client(char *buffer, char *return_buffer, int fds_max, identifier *fd, identifier **fds) {
+void read_client(int sockfd, char *buffer, char *return_buffer, int fds_max, identifier *fd, identifier **fds) {
 
     if (fd->client_info == NULL) {
 
@@ -149,20 +178,19 @@ void read_client(char *buffer, char *return_buffer, int fds_max, identifier *fd,
 
     } else {
 
-        short operation_index = 0,
-              info_index = 1;
+        char temp_return_buffer[BUFFER_SIZE],
+             info[INFO_SIZE],
+             operation = buffer[OPERATION_INDEX];
 
-        char info[INFO_SIZE],
-             operation = buffer[operation_index];
-
+        bzero(temp_return_buffer, BUFFER_SIZE);
         bzero(info, INFO_SIZE);
 
         switch (operation) {
 
             case '0':
 
-                get_info(buffer, info, info_index, DELIM);
-                list_all_locals(info, fds_max, fds, return_buffer);
+                get_info(buffer, info, INFO_INDEX, DELIM);
+                list_all_locals(info, fds_max, fds, temp_return_buffer);
                 break;
 
             case '1':
@@ -171,11 +199,15 @@ void read_client(char *buffer, char *return_buffer, int fds_max, identifier *fd,
 
             case '2':
 
+                get_info(buffer, info, INFO_INDEX, DELIM);
+                subscribe_local(sockfd, info, fds_max, fds, temp_return_buffer);
                 break;
 
             default:
                 break;
         }
+
+        snprintf(return_buffer, sizeof(temp_return_buffer) + 2, "%c|%s", operation, temp_return_buffer);
     }
 }
 /*
@@ -189,11 +221,8 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
 
     } else {
 
-        short operation_index = 0,
-              id_index = 1;
-
         char id[INFO_SIZE],
-             operation = buffer[operation_index];
+             operation = buffer[OPERATION_INDEX];
 
         bzero(id, INFO_SIZE);
 
@@ -201,7 +230,7 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
 
             case '0':
 
-                get_info(buffer, id, id_index, DELIM);
+                get_info(buffer, id, INFO_SIZE, DELIM);
                 get_sensor_last_read(id, fds_max, fds, return_buffer);
                 break;
 
@@ -216,7 +245,7 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
 
             case '3':
 
-                get_info(buffer, id, id_index, DELIM);
+                get_info(buffer, id, INFO_INDEX, DELIM);
                 disconnect(id, fds_max, fds, return_buffer);
                 break;
 
@@ -235,18 +264,32 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
         new_register(fd, buffer);
         fd->last_reads = new_queue();
+        fd->subscribed_sensors = calloc(MAX_CLIENTS, sizeof(short));
 
     } else {
 
-        char id[INFO_SIZE];
+        char id[INFO_SIZE],
+             to_send[BUFFER_SIZE];
 
-        get_info(fd->client_info, id, 0, DELIM);
+        bzero(to_send, sizeof(to_send));
+
+        get_info(fd->client_info, id, BROKER_SENSOR_ID, DELIM);
         printf("ID: %s\tREAD_SENSOR: %s\n", id, buffer);
         queue_insert(fd->last_reads, buffer);
+
+        for (int i = 3; i < MAX_CLIENTS; i++) {
+
+            if(fd->subscribed_sensors[i] == CLIENT_SUBSCRIBED) {
+
+                snprintf(to_send, sizeof(to_send), "2|%s", buffer);
+                send(i, to_send, sizeof(to_send), 0);
+
+                printf("MANDEI %s\n", to_send);
+            }
+        }
     }
 
-    char *received = "RECEIVED.";
-    strcpy(return_buffer, received);
+    strcpy(return_buffer, "RECEIVED.");
 }
 
 void fds_realloc(int *fds_max, int socket_client, identifier **fds, fd_type type) {
@@ -462,7 +505,7 @@ int main(int argc, char const *argv[]) {
 
                             case FD_C:
 
-                                read_client(buffer, return_buffer, fds_max, fd, fds);
+                                read_client(i, buffer, return_buffer, fds_max, fd, fds);
                                 break;
 
                             case FD_A:
