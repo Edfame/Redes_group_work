@@ -137,10 +137,13 @@ int main(int argc, char const *argv[]) {
 
                         case '1':
 
-                        case '2':
-
                             scanf(" %s", input);
                             snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
+                            break;
+
+                        case '2':
+
+                            valid_operation = 0;
                             break;
 
                         case '3':
@@ -153,8 +156,8 @@ int main(int argc, char const *argv[]) {
 
                             } else if(strcmp(subscribed_local, CLIENT_NOT_SUBSCRIBED) != 0) {
 
-                                valid_operation = 0;
                                 printf("> Already subscribed to a local.\n");
+                                valid_operation = 0;
                                 break;
                             }
 
@@ -165,9 +168,6 @@ int main(int argc, char const *argv[]) {
                         default:
 
                             valid_operation = 0;
-
-                            printf("> Invalid Operation.\n");
-                            print_operations();
                             break;
 
                     }
@@ -175,6 +175,11 @@ int main(int argc, char const *argv[]) {
                     if(valid_operation) {
 
                         send(sockfd, buffer, sizeof(buffer), 0);
+
+                    } else {
+
+                        printf("> Invalid Operation.\n");
+                        print_operations();
 
                     }
 
@@ -206,7 +211,7 @@ int main(int argc, char const *argv[]) {
 
                             case '3':
 
-                                printf("> %s\n", info);
+                                printf("> Subscription info: %s\n", info);
                                 break;
 
                             default:

@@ -32,7 +32,7 @@ void list_all_sensors(char *buffer) {
     }
 }
 
-void read_update_file(char *file_name, char *dest) {
+int read_update_file(char *file_name, char *dest) {
 
     //Opens the file in read mode.
     FILE *file = fopen(file_name, "r");
@@ -40,7 +40,7 @@ void read_update_file(char *file_name, char *dest) {
     if(file == NULL)
     {
         printf("No such file \"%s\"\n", file_name);
-        exit(EXIT_FAILURE);
+        return 0;
 
     } else {
         printf("Opened: %s\n", file_name);
@@ -54,6 +54,8 @@ void read_update_file(char *file_name, char *dest) {
     }
 
     fclose(file);
+
+    return 1;
 }
 
 int main(int argc, char const *argv[]) {
@@ -144,7 +146,7 @@ int main(int argc, char const *argv[]) {
                 bzero(sensor_type, sizeof(sensor_type));
 
                 scanf(" %s %s", input, sensor_type);
-                read_update_file(input, file_content);
+                valid_operation = read_update_file(input, file_content);
 
                 snprintf(buffer, sizeof(buffer) + sizeof(sensor_type) + 2, "%c,%s_%s", operation, file_content, sensor_type);
                 break;
@@ -158,14 +160,19 @@ int main(int argc, char const *argv[]) {
             default:
 
                 valid_operation = 0;
-
-                printf("> Invalid Operation.\n");
-                print_operations();
                 break;
         }
 
-        send(sockfd, buffer, sizeof(buffer), 0);
+        if(valid_operation) {
 
+            send(sockfd, buffer, sizeof(buffer), 0);
+
+        } else {
+
+            printf("> Invalid Operation.\n");
+            print_operations();
+
+        }
         //Receiving: "read_value".
         if(valid_operation && (read(sockfd, buffer, sizeof(buffer)) > 0)) {
             //recv(sockfd, buffer, sizeof(buffer), 0);

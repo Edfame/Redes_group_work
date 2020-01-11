@@ -105,7 +105,8 @@ void send_firmware_update(char *update_info, int fds_max, identifier **fds, char
          update[BUFFER_SIZE],
          temp_id[INFO_SIZE],
          temp_type[INFO_SIZE],
-         temp_local[INFO_SIZE];
+         temp_local[INFO_SIZE],
+         update_flag = 'n';
 
     bzero(sensor_type, sizeof(sensor_type));
     bzero(update, sizeof(update));
@@ -125,6 +126,8 @@ void send_firmware_update(char *update_info, int fds_max, identifier **fds, char
             //ID,TYPE,LOCAL,FV
             if(strcmp(temp_type, sensor_type) == 0) {
 
+                update_flag = 'u';
+
                 get_info(fds[i]->client_info, temp_id, CLIENT_SENSOR_ID, DELIM);
                 get_info(fds[i]->client_info, temp_local, CLIENT_SENSOR_LOCAL, DELIM);
 
@@ -135,7 +138,14 @@ void send_firmware_update(char *update_info, int fds_max, identifier **fds, char
         }
     }
 
-    strcpy(return_buffer, SENSOR_UPDATED);
+    if(update_flag == 'u') {
+
+        strcpy(return_buffer, SENSOR_UPDATED);
+
+    } else {
+
+        strcpy(return_buffer, SENSOR_NOT_UPDATED);
+    }
 }
 
 /*
@@ -227,7 +237,7 @@ void subscribe_local(int sockfd, char *local, int fds_max, identifier **fds, cha
 
     if(sub_flag == 'y') {
 
-        strcpy(return_buffer, CLIENT_SUBSCRIBED_MSG);
+        strcpy(return_buffer, local);
 
     } else {
 
@@ -335,7 +345,7 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
 
             case '0':
 
-                get_info(buffer, info, INFO_SIZE, DELIM);
+                get_info(buffer, info, INFO_INDEX, DELIM);
                 get_sensor_last_read(info, fds_max, fds, return_buffer);
                 break;
 
