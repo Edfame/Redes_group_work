@@ -96,7 +96,7 @@ typedef struct identifier{
     fd_type type;
     char *client_info;
     queue *last_reads;
-    short *subscribed_sensors;
+    short *subscribed_clients;
 
 } identifier;
 

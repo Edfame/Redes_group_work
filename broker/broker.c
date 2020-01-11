@@ -18,9 +18,9 @@ void unsubscribe(int client_socket, int fds_max, identifier **fds) {
 
     for (int i = 3; i <= fds_max; i++) {
 
-        if((fds[i]->type == FD_S) && (fds[i]->subscribed_sensors != NULL)) {
+        if((fds[i]->type == FD_S) && (fds[i]->subscribed_clients != NULL)) {
 
-            fds[i]->subscribed_sensors[client_socket] = CLIENT_UNSUBSCRIBED;
+            fds[i]->subscribed_clients[client_socket] = CLIENT_UNSUBSCRIBED;
         }
     }
 }
@@ -231,7 +231,7 @@ void subscribe_local(int sockfd, char *local, int fds_max, identifier **fds, cha
 
             if(strcmp(temp_local, local) == 0) {
 
-                fds[i]->subscribed_sensors[sockfd] = CLIENT_SUBSCRIBED;
+                fds[i]->subscribed_clients[sockfd] = CLIENT_SUBSCRIBED;
                 sub_flag = 'y';
             }
         }
@@ -383,7 +383,7 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
         new_register(fd, buffer);
         fd->last_reads = new_queue();
-        fd->subscribed_sensors = calloc(MAX_CLIENTS, sizeof(short));
+        fd->subscribed_clients = calloc(MAX_CLIENTS, sizeof(short));
 
     } else {
 
@@ -398,7 +398,7 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
         for (int i = 3; i < MAX_CLIENTS; i++) {
 
-            if(fd->subscribed_sensors[i] == CLIENT_SUBSCRIBED) {
+            if(fd->subscribed_clients[i] == CLIENT_SUBSCRIBED) {
 
                 snprintf(to_send, sizeof(to_send), "3|%s", buffer);
                 send(i, to_send, sizeof(to_send), 0);

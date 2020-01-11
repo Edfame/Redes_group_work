@@ -2,7 +2,7 @@
 
 void print_operations() {
 
-    printf("0 - Lists locals where are sensors of type T.\n1 - Get last read from a local.\n2 - Get a read for a certain date and hour.\n3 - Subscribe to sensor X.\n");
+    printf("0 - Lists locals where are sensors of type T.\n1 - Get last read from a local.\n2 - Get a read for a certain date and hour.\n3 - Subscribe to local X.\n");
 
 }
 

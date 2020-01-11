@@ -1,0 +1,59 @@
+Decisoes tomadas/protocolos implmentados:
+
+Geral:
+    - Todoas as configurações são lidas de ficheiros. Para serem alteradas, tem que se alterar no respetivo ficheiro.
+
+Admin:
+    - A primeira mensagem enviada ao borker é uma mensagem de registo com o ID e NICKNAME do admin.
+    - É recebida uma mensagem vazia, daí o dacto de existir um recv logo a seguir ao send da mensagem anterior.
+    - Foi definido um protocolo para as funções do admin, a cada uma delas corresponde um número.
+    - É enviado o número da operção ao broker juntamente com o conteúdo necessário (e.g. id do sensor).
+    - Caso seja enviada uma operação inválida ou a operação resulte em erro (e.g. abrir o ficheiro de update), nada é enviado.
+    - Caso seja enviada informação que não exista no broker (e.g. id inválido), cabe a este responder que não tem essa info.
+
+Client:
+    - A primeira mensagem enviada ao borker é uma mensagem de registo com o ID e NICKNAME do client.
+    - É recebida uma mensagem vazia, daí o dacto de existir um recv logo a seguir ao send da mensagem anterior.
+    - Foi definido um protocolo para as funções do client, a cada uma delas corresponde um número.
+    - É enviado o número da operção ao broker juntamente com o conteúdo necessário (e.g. tipo do sensor, local,...).
+    - Caso seja enviada uma operação inválida ou a operação resulte em erro (e.g. subscrever um segundo local), nada é enviado.
+    - Caso seja enviada informação que não exista no broker (e.g. id inválido), cabe a este responder que não tem essa info.
+    - A operação 2 não está implementada na hora em que escrevi isto, 17:25 11/01/2020.
+    - O client faz um select entre dois file_descriptors, o std_in e socket que faz a ligação com o broker.
+
+Sensor:
+    - A primeira mensagem enviada ao broker é a mensagem de registo (ID,TYPE,LOCAL,FIRMWARE_VERSION).
+    - A mensagem vazia recebida é descartada pelo recv do update pois não é um update.
+    - A cada X segundos (lidos de um ficheiro de configuração) envia ao broker uma leitura. A leitura de info vinda do borker
+    também fica parada esses X segundos, daí o update não imediato.
+    - Quando recebe um update de firmware, reescreve o ficheiro de informação que leu quando começou a correr, mas muda o valor
+    de FIRMWARE_VERSION para o valor recebido.
+
+BROKER:
+    - Faz listen a três porta, uma para cada tipo de cliente (Admin, Client e Sensor).
+    - Aceita os clientes e mete-lhes um tipo respetivo a cada um (Admin - FD_A, Client - FD_C, Sensor - FD_S);
+    Coloca-os todos numa array indexada por file descriptor.
+    - Se é a primeira leitura regista o novo cliente.
+    - Quando não é um cliente novo, é informação de um previamente aceite, chama a função respetiva para cada tipo (read_admin, read_sensor, read_client).
+
+    - Admin:
+        - Se for pedida a ultima leitura do sensor X, percorre todos os clientes registados até encontrar um que seja o sensor que se procura.
+        Se não existir retorna ao admin a dizer que não existe.
+        - Se pedir a listagem de sensores, percorre a lista dos os clientes registados, para cada cliente que for sensor, coloca-o numa lista.
+        Devolve a lista ao admin.
+        - Se a operação for update de firmware, vai procurar por todos os clientes e os que forem sensores e tiverem o tipo respetivo, envia o conteúdo recebido.
+        - Se pretender desativar o sensor com o id X, procura o sensor que tenha esse id, caso encontre mete o tipo a FD_NONE para depois ser disconectado. Caso não encontre devolve ao admin que não encontrou.
+
+    - Client:
+        - Caso pretenda lista todos os sensores do tipo passado, percorre todos os clientes registados e adiciona a uma lista caso os tipos coincidam.
+        Devolve a lista ao client.
+        - Se o client pretender obter a última leitura de um local, são percorridos todos os clientes registados. Para todos os sensores que têm o mesmo local que o passado, a última leitura do mesmo é adicona
+        a uma lista que vai ser devolvida ao cliente.
+        - Subscribe to local X, ao percorrer a lista de todos os clientes registados, se o cliente for um sensor e o local for igual ao passado pelo client, na lista de clients subscritos do sensor (indexada por file descriptor),
+        é colocada uma flag no indice do client que subscreveu.
+
+    - Sensor:
+        - A cada leitura recebida guarda-a na queue, que guarda no máximo 10 leitura, desse sensor.
+        - Percorre a lista de subscribed_clients, para cada um que esteja subscrito, i.e. tenha a flag CLIENT_SUBSCRIBED, é enviada a leitura.
+
+    - Se um client se desconectar, as suas subrições são anuladas.
