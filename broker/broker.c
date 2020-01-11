@@ -99,6 +99,45 @@ void get_sensor_last_read(char *id, int fds_max, identifier **fds, char *return_
     }
 }
 
+void send_firmware_update(char *update_info, int fds_max, identifier **fds, char *return_buffer) {
+
+    char sensor_type[INFO_SIZE],
+         update[BUFFER_SIZE],
+         temp_id[INFO_SIZE],
+         temp_type[INFO_SIZE],
+         temp_local[INFO_SIZE];
+
+    bzero(sensor_type, sizeof(sensor_type));
+    bzero(update, sizeof(update));
+    bzero(temp_id, sizeof(temp_id));
+    bzero(temp_type, sizeof(temp_type));
+    bzero(temp_local, sizeof(temp_local));
+
+    get_info(update_info, sensor_type, BROKER_CLIENT_TYPE, ADMIN_UPDATE_DELIM);
+    get_info(update_info, update, BROKER_CLIENT_UPDATE, ADMIN_UPDATE_DELIM);
+
+    for (int i = 3; i <= fds_max; i++) {
+
+        if((fds[i]->type == FD_S) && (fds[i]->client_info != NULL)) {
+
+            get_info(fds[i]->client_info, temp_type, CLIENT_SENSOR_TYPE, DELIM);
+
+            //ID,TYPE,LOCAL,FV
+            if(strcmp(temp_type, sensor_type) == 0) {
+
+                get_info(fds[i]->client_info, temp_id, CLIENT_SENSOR_ID, DELIM);
+                get_info(fds[i]->client_info, temp_local, CLIENT_SENSOR_LOCAL, DELIM);
+
+                snprintf(fds[i]->client_info, strlen(fds[i]->client_info) + sizeof(update),"%s,%s,%s,%s", temp_id, temp_type, temp_local, update);
+
+                send(i, update, sizeof(update), 0);
+            }
+        }
+    }
+
+    strcpy(return_buffer, SENSOR_UPDATED);
+}
+
 /*
  * list_all_sensors - returns a list of all the sensors in the system.
  */
@@ -287,17 +326,17 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
 
     } else {
 
-        char id[INFO_SIZE],
+        char info[INFO_SIZE],
              operation = buffer[OPERATION_INDEX];
 
-        bzero(id, INFO_SIZE);
+        bzero(info, INFO_SIZE);
 
         switch (operation) {
 
             case '0':
 
-                get_info(buffer, id, INFO_SIZE, DELIM);
-                get_sensor_last_read(id, fds_max, fds, return_buffer);
+                get_info(buffer, info, INFO_SIZE, DELIM);
+                get_sensor_last_read(info, fds_max, fds, return_buffer);
                 break;
 
             case '1':
@@ -307,12 +346,14 @@ void read_admin(char *buffer, char *return_buffer, int fds_max, identifier *fd, 
 
             case '2':
 
+                get_info(buffer, info, INFO_INDEX, DELIM);
+                send_firmware_update(info, fds_max, fds, return_buffer);
                 break;
 
             case '3':
 
-                get_info(buffer, id, INFO_INDEX, DELIM);
-                disconnect(id, fds_max, fds, return_buffer);
+                get_info(buffer, info, INFO_INDEX, DELIM);
+                disconnect(info, fds_max, fds, return_buffer);
                 break;
 
             default:
@@ -353,7 +394,7 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
         }
     }
 
-    strcpy(return_buffer, "RECEIVED.");
+    strcpy(return_buffer, SENSOR_NOT_UPDATED);
 }
 
 int main(int argc, char const *argv[]) {

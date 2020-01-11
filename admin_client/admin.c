@@ -32,6 +32,30 @@ void list_all_sensors(char *buffer) {
     }
 }
 
+void read_update_file(char *file_name, char *dest) {
+
+    //Opens the file in read mode.
+    FILE *file = fopen(file_name, "r");
+
+    if(file == NULL)
+    {
+        printf("No such file \"%s\"\n", file_name);
+        exit(EXIT_FAILURE);
+
+    } else {
+        printf("Opened: %s\n", file_name);
+    }
+
+    char buffer[BUFFER_SIZE];
+
+    while(fscanf(file, "%s", buffer)!=EOF)
+    {
+        strcat(dest,buffer);
+    }
+
+    fclose(file);
+}
+
 int main(int argc, char const *argv[]) {
 
     int sockfd,
@@ -49,7 +73,9 @@ int main(int argc, char const *argv[]) {
          id[INFO_SIZE],
          nickname[INFO_SIZE],
          buffer[BUFFER_SIZE],
-         sensor_id[INFO_SIZE];
+         input[INFO_SIZE],
+         file_content[BUFFER_SIZE],
+         sensor_type[INFO_SIZE];
 
     //Get Admin files.
     if (argc < 3) {
@@ -103,8 +129,8 @@ int main(int argc, char const *argv[]) {
 
             case '0':
 
-                scanf(" %s", sensor_id);
-                snprintf(buffer, sizeof(buffer), "%c,%s", operation, sensor_id);
+                scanf(" %s", input);
+                snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
                 break;
 
             case '1':
@@ -114,12 +140,19 @@ int main(int argc, char const *argv[]) {
 
             case '2':
 
+                bzero(file_content, sizeof(file_content));
+                bzero(sensor_type, sizeof(sensor_type));
+
+                scanf(" %s %s", input, sensor_type);
+                read_update_file(input, file_content);
+
+                snprintf(buffer, sizeof(buffer) + sizeof(sensor_type) + 2, "%c,%s_%s", operation, file_content, sensor_type);
                 break;
 
             case '3':
 
-                scanf(" %s", sensor_id);
-                snprintf(buffer, sizeof(buffer), "%c,%s", operation, sensor_id);
+                scanf(" %s", input);
+                snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
                 break;
 
             default:
@@ -149,8 +182,6 @@ int main(int argc, char const *argv[]) {
                     break;
 
                 case '2':
-
-                    break;
 
                 case '3':
 

@@ -88,8 +88,18 @@ int main(int argc, char const *argv[]) {
         bzero(buffer, sizeof(buffer));
         //Firmware updated received.
         if(recv(sockfd, buffer, sizeof(buffer), 0) > 0) {
-            //TODO Handle update.
-            printf("UPDATE: %s\n", buffer);
+
+            if(strcmp(buffer, SENSOR_NOT_UPDATED) != 0) {
+
+                bzero(firmware_version, sizeof(firmware_version));
+                strcpy(firmware_version, buffer);
+
+                FILE *file = fopen(sensor_info_file, "w+");
+
+                fprintf(file, "ID,TYPE,LOCAL,FIRMWARE_VERSION\n%s,%s,%s,%s\n", id, type, local, firmware_version);
+
+                fclose(file);
+            }
         }
     }
 

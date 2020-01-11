@@ -1,1 +1,0 @@
-gcc -Wall -std=gnu99 sensor.c -o sensor ../yaml/libcyaml.so.0

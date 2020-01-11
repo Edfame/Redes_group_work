@@ -22,6 +22,8 @@
 #define BROKER_SENSOR_ID 0
 #define BROKER_CLIENT_PORT 4
 #define BROKER_ADMIN_PORT 5
+#define BROKER_CLIENT_UPDATE 0
+#define BROKER_CLIENT_TYPE 1
 #define MAX_CLIENTS 200
 
 /*
@@ -35,6 +37,8 @@
 #define SENSOR_LOCAL 6
 #define SENSOR_FIRMWARE_VERSION 7
 #define SENSOR_UNIT "µg/m³"
+#define SENSOR_NOT_UPDATED "NOT_UPDATED"
+#define SENSOR_UPDATED "UPDATED"
 
 /*
  * ADMIN
@@ -44,6 +48,7 @@
 #define ADMIN_ID 2
 #define ADMIN_NICKNAME 3
 #define ADMIN_DELIM ";\n"
+#define ADMIN_UPDATE_DELIM "_\n"
 #define ADMIN_SENSOR_NOT_FOUND "Sensor not found."
 
 /*
@@ -54,6 +59,7 @@
 #define CLIENT_ID 2
 #define CLIENT_NICKNAME 3
 #define CLIENT_LOCAL_NOT_FOUND "Local not found."
+#define CLIENT_SENSOR_ID 0
 #define CLIENT_SENSOR_TYPE 1
 #define CLIENT_SENSOR_LOCAL 2
 #define CLIENT_DELIM "|\n"
