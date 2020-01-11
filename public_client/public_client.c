@@ -43,6 +43,7 @@ int main(int argc, char const *argv[]) {
            read_fds;
 
     char operation,
+         subscribed_local[BUFFER_SIZE],
          address[INFO_SIZE],
          port[INFO_SIZE],
          client_settings_file[INFO_SIZE],
@@ -104,6 +105,10 @@ int main(int argc, char const *argv[]) {
 
     fds_max = max(sockfd, STDIN_FILENO);
 
+    bzero(subscribed_local, sizeof(subscribed_local));
+
+    strcpy(subscribed_local, CLIENT_NOT_SUBSCRIBED);
+
     print_operations();
 
     for(;;) {
@@ -134,10 +139,27 @@ int main(int argc, char const *argv[]) {
 
                         case '2':
 
+                            scanf(" %s", input);
+                            snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
+                            break;
+
                         case '3':
 
                             scanf(" %s", input);
+
+                            if(strcmp(subscribed_local, input) == 0) {
+
+                                printf("> Updated subscription.\n");
+
+                            } else if(strcmp(subscribed_local, CLIENT_NOT_SUBSCRIBED) != 0) {
+
+                                valid_operation = 0;
+                                printf("> Already subscribed to a local.\n");
+                                break;
+                            }
+
                             snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
+                            strcpy(subscribed_local, input);
                             break;
 
                         default:
@@ -159,8 +181,6 @@ int main(int argc, char const *argv[]) {
                 } else if(i == sockfd) {
 
                     if(read(sockfd, buffer, sizeof(buffer)) > 0) {
-
-                        printf("BUFFER: %s\n", buffer);
 
                         operation = buffer[OPERATION_INDEX];
 
