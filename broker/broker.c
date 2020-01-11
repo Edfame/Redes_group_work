@@ -133,6 +133,8 @@ void send_firmware_update(char *update_info, int fds_max, identifier **fds, char
 
                 snprintf(fds[i]->client_info, strlen(fds[i]->client_info) + sizeof(update),"%s,%s,%s,%s", temp_id, temp_type, temp_local, update);
 
+                printf("> Updating sensor %s info to: %s\n", temp_id, fds[i]->client_info);
+
                 send(i, update, sizeof(update), 0);
             }
         }
