@@ -17,7 +17,7 @@ identifier *new_identifier(fd_type fd_type) {
     new_identifier->type = fd_type;
     new_identifier->client_info = NULL;
     new_identifier->last_reads = NULL;
-    new_identifier->subscribed_sensors = NULL;
+    new_identifier->subscribed_clients = NULL;
 
     return new_identifier;
 }

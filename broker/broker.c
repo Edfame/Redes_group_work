@@ -394,6 +394,11 @@ void read_sensor(char *buffer, char *return_buffer, identifier *fd) {
 
         get_info(fd->client_info, id, BROKER_SENSOR_ID, DELIM);
         printf("ID: %s\tREAD_SENSOR: %s\n", id, buffer);
+
+        if(queue_is_full(fd->last_reads)) {
+            queue_remove(fd->last_reads);
+        }
+
         queue_insert(fd->last_reads, buffer);
 
         for (int i = 3; i < MAX_CLIENTS; i++) {
