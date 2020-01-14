@@ -162,7 +162,6 @@ int main(int argc, char const *argv[]) {
                             }
 
                             snprintf(buffer, sizeof(buffer), "%c,%s", operation, input);
-                            strcpy(subscribed_local, input);
                             break;
 
                         default:
@@ -212,6 +211,7 @@ int main(int argc, char const *argv[]) {
                             case '3':
 
                                 printf("> Subscription info: %s\n", info);
+                                strcpy(subscribed_local, info);
                                 break;
 
                             default:

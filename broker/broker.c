@@ -243,7 +243,7 @@ void subscribe_local(int sockfd, char *local, int fds_max, identifier **fds, cha
 
     } else {
 
-        strcpy(return_buffer, "Not subscribed.");
+        strcpy(return_buffer, CLIENT_NOT_SUBSCRIBED);
     }
 }
 
